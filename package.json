@@ -1,0 +1,31 @@
+{
+  "name": "sr25519_ts",
+  "version": "0.0.0",
+  "description": "Pure Typescript sr25519 implementation",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UniqueNetwork/sr25519_ts"
+  },
+  "bugs": {
+    "url": "https://github.com/UniqueNetwork/sr25519_ts/issues"
+  },
+  "homepage": "https://github.com/UniqueNetwork/sr25519_ts#readme",
+  "author": "Unique Network dev team",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup src/index.ts --dts",
+    "test": "vitest",
+    "testrun": "vitest run"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@polkadot/util-crypto": "^10.2.1",
+    "tsup": "^6.5.0",
+    "tsx": "^3.12.1",
+    "typescript": "^4.9.3",
+    "vitest": "^0.25.5"
+  }
+}
