@@ -1,3 +1,6 @@
+import * as sha3 from '@noble/hashes/sha3'
+import * as sha3Addons from '@noble/hashes/sha3-addons'
+
 export interface Keypair {
   publicKey: Uint8Array
   secretKey: Uint8Array
