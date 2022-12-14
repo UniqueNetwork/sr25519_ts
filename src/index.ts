@@ -1,5 +1,4 @@
-import * as sha3 from '@noble/hashes/sha3'
-import * as sha3Addons from '@noble/hashes/sha3-addons'
+import * as strobe from "./strobe"
 
 export interface Keypair {
   publicKey: Uint8Array
@@ -8,6 +7,12 @@ export interface Keypair {
 
 export const Sr25519 = {
   sign(message: Uint8Array, keypair: Keypair): Uint8Array {
+
+    // Sign simple part
+
+    let s = new strobe.Strobe();
+    s.strobe_init("aaa");
+
     //signature should be 64 bytes length
     return Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
   },
