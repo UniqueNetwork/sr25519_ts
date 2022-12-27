@@ -1,28 +1,70 @@
-import { Transcript } from "./merlin";
+import { Transcript, getBytesU32 } from "./merlin";
+import { randomBytes } from "@noble/hashes/utils";
+import { Scalar, ScalarAdd, ScalarMul, ScalarBigintToBytesForm, ScalarBytesToBigintForm } from "./scalar";
+import { RistrettoBasepointTable } from "./ristretto";
 
 interface ISigningContext
 {
-    Bytes(data: Uint8Array): Transcript;
+    BytesClone(data: Uint8Array): Transcript;
+    Bytes(data: Uint8Array);
     GetTranscript(): Transcript;
 }
 
-class SecretKey{}
-class PublicKey{}
-export class RandomGenerator{}
-class Signature{}
+export class SecretKey{
+    nonce: Uint8Array;
+    key: Scalar; 
+    
+    static FromBytes(bytes: Uint8Array): SecretKey {
+        // TODO add size != 64 error 
+        let r: SecretKey = new SecretKey();
+        r.key = Scalar.FromBytes(bytes.slice(0,32));
+        r.nonce = bytes.slice(32,64);
+       return r;
+    }
+
+}
+export class PublicKey{
+    key: Uint8Array; 
+
+    static FromBytes(bytes: Uint8Array): PublicKey {
+        let pk = new PublicKey();
+        pk.key = bytes;
+        return pk;
+    }
+
+}
+export class RandomGenerator{
+
+    GetRandomArrayU8_32(): Uint8Array{
+        return randomBytes(32);
+    }
+
+    GetHardcoded(): Uint8Array{
+        return Uint8Array.from([ 77, 196, 92, 65, 167, 196, 215, 23, 222, 26, 136, 164, 123, 67, 115, 78, 178, 96, 208, 59, 8, 157, 203, 111, 157, 87, 69, 105, 155, 61, 111, 153 ]);
+    }
+}
+
+class Signature{
+    public R: Uint8Array;
+    public S: Uint8Array;
+
+    ToBytes() 
+    {
+        var mergedArray = new Uint8Array(this.R.length + this.S.length);
+        mergedArray.set(this.R);
+        mergedArray.set(this.S, this.R.length);
+        mergedArray[63] |= 128;
+        return mergedArray;
+    }
+}
 class CompressedRistretto{
 
     ToBytes(): Uint8Array {
         return new Uint8Array(2);
     }
 }
-class Scalar {
-    static FromBytesModOrderWide(data: Uint8Array): Scalar {
-        return new Scalar();
-    }
-}
 
-class SigningTranscript {
+export class SigningTranscript {
 
     context: ISigningContext;
 
@@ -47,17 +89,17 @@ class SigningTranscript {
         this.CommitBytesB(this.context.GetTranscript(), label, bytes);
     }
 
-    WitnessScalarLabel(label: Uint8Array, bytes: Uint8Array, rng: RandomGenerator): Scalar
+    WitnessScalarLabel(label: Uint8Array, bytes: Uint8Array, rng: RandomGenerator): Uint8Array
     {
         return this.WitnessScalarFR(this.context.GetTranscript(), label, bytes, rng);
     }
 
-    WitnessScalar(bytes: Uint8Array, rng: RandomGenerator): Scalar
+    WitnessScalar(bytes: Uint8Array, rng: RandomGenerator): Uint8Array
     {
         return this.WitnessScalarSR(this.context.GetTranscript(), bytes, rng);
     }
 
-    ChallengeScalar(label: Uint8Array): Scalar
+    ChallengeScalar(label: Uint8Array): Uint8Array
     {
         var data = this.ChallengeBytes(label);
         return Scalar.FromBytesModOrderWide(data);
@@ -89,42 +131,55 @@ class SigningTranscript {
         this.CommitBytesB(ts, label, compressedRistretto);
     }
 
-    WitnessScalarSR(ts: Transcript, nonce: Uint8Array, rng: RandomGenerator): Scalar
+    WitnessScalarSR(ts: Transcript, nonce: Uint8Array, rng: RandomGenerator): Uint8Array
     {
-        byte[] bt = new byte[64];
-        bt.Initialize();
-        ts.WitnessBytes(ref bt, nonce, rng);
+        let t = ts.WitnessBytes(new Uint8Array(0), nonce, rng);
 
-        return Scalar.FromBytesModOrderWide(bt);
+        // Fill bytes  size = 64
+        t.MetaAd(Uint8Array.from([64]), false);
+        let dst = t.Prf(64, false) as Uint8Array;
+
+        return Scalar.FromBytesModOrderWide(dst);
     }
 
-    WitnessScalarFR(ts: Transcript, label: Uint8Array, nonce: Uint8Array, rng: RandomGenerator): Scalar
+    WitnessScalarFR(ts: Transcript, label: Uint8Array, nonce: Uint8Array, rng: RandomGenerator): Uint8Array
     {
-        byte[] bt = new byte[64];
-        bt.Initialize();
-        ts.WitnessBytes(label, ref bt, nonce, rng);
+        // byte[] bt = new byte[64];
+        // bt.Initialize();
+        // ts.WitnessBytes(label, ref bt, nonce, rng);
 
-        return Scalar.FromBytesModOrderWide(bt);
+        // return Scalar.FromBytesModOrderWide(bt);
+
+        let t = ts.WitnessBytes(label, nonce, rng);
+
+        // Fill bytes  size = 64
+        t.MetaAd(getBytesU32(64), false);
+        let dst = t.Prf(64, false) as Uint8Array;
+
+        return Scalar.FromBytesModOrderWide(dst);
     }
 
 }
-
 
 export class SigningContext085 implements ISigningContext
 { 
     ts: Transcript;
 
-    SigningContext085(context: Uint8Array)
+    constructor(context: Uint8Array)
     {
         this.ts = new Transcript();
         this.ts.Init("SigningContext");
         this.ts.AppendMessage(new Uint8Array(), context);
     }
 
-    Bytes(data: Uint8Array): Transcript
+    Bytes(data: Uint8Array)
+    {
+        this.ts.AppendMessage(Buffer.from("sign-bytes", 'ascii'), data);
+    }
+
+    BytesClone(data: Uint8Array): Transcript
     {
         var clone = this.ts.Clone();
-        // Buffer.from(description, 'ascii')
         clone.AppendMessage(Buffer.from("sign-bytes", 'ascii'), data);
         return clone;
     }
@@ -133,30 +188,40 @@ export class SigningContext085 implements ISigningContext
     {
         return this.ts;
     }
-
+3
     // public static Signature 
     sign(st: SigningTranscript, secretKey: SecretKey, publicKey: PublicKey, rng: RandomGenerator) : Signature
     {
-        st.SetProtocolName(GetStrBytes("Schnorr-sig"));
-        st.CommitPoint(GetStrBytes("sign:pk"), publicKey.Key);
+        // st.SetProtocolName(GetStrBytes("Schnorr-sig"));
+        st.SetProtocolName(Buffer.from("Schnorr-sig", 'ascii'));// (""));
+        // st.CommitPoint(GetStrBytes("sign:pk"), publicKey.Key);
+        st.CommitPointBytes(Buffer.from("sign:pk", 'ascii'), publicKey.key);
 
-        var r = st.WitnessScalar(GetStrBytes("signing"), secretKey.nonce, rng);
+        let r = st.WitnessScalarLabel(Buffer.from("signing", 'ascii'), secretKey.nonce, rng);
+        var sc = new Scalar();
+        sc.bytes = r;
 
         var tbl = new RistrettoBasepointTable();
-        var R = tbl.Mul(r).Compress();
+        var R = tbl.Mul(sc).Compress();
 
-        st.CommitPoint(GetStrBytes("sign:R"), R);
+        st.CommitPoint(Buffer.from("sign:R", 'ascii'), R);
 
-        Scalar k = st.ChallengeScalar(GetStrBytes("sign:c"));  // context, message, A/public_key, R=rG
-        k.Recalc();
-        secretKey.key.Recalc();
-        r.Recalc();
+        var k = st.ChallengeScalar(Buffer.from("sign:c", 'ascii'));  // context, message, A/public_key, R=rG
+        // k.Recalc();
+        // secretKey.key.Recalc();
+        // r.Recalc();
 
-        var scalar = k.ScalarInner * secretKey.key.ScalarInner + r.ScalarInner;
+        // var scalar = k.ScalarInner * secretKey.key.ScalarInner + r.ScalarInner;
+        var scalar = ScalarAdd(ScalarMul(ScalarBytesToBigintForm(k), 
+            ScalarBytesToBigintForm(secretKey.key.bytes)), ScalarBytesToBigintForm(r));
 
-        var s = new Scalar { ScalarBytes = scalar.ToBytes() };
-        s.Recalc();
+       // var s = new Scalar { ScalarBytes = scalar.ToBytes() };
+        // s.Recalc();
+        var sig = new Signature();
+        sig.R = R.ToBytes();
+        sig.S = ScalarBigintToBytesForm(scalar);
 
-        return new Signature { R = R, S = s };
+        return sig;
+        // return new Signature { R = R, S = s };
     }
 }

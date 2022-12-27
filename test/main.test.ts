@@ -22,6 +22,7 @@ describe('main', async () => {
 
     const signature = Sr25519.sign(message, {publicKey, secretKey})
 
+    console.log(signature);
     const isValid = polkadotUtilCrypto.sr25519Verify(message, signature, publicKey)
 
     expect(isValid).toBe(true)
