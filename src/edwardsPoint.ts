@@ -15,8 +15,6 @@ export class EdwardsPoint
     public Z: FieldElement;
     public T: FieldElement;
 
-    // public constructor() {}
-
     FromElems(x: FieldElement, y: FieldElement, z: FieldElement, t: FieldElement)
     {
         this.X = x;
@@ -58,11 +56,6 @@ export class EdwardsPoint
 
     static Decompress(bytes: Uint8Array) : EdwardsPoint
     {
-        // var invsqrt =
-        // new Func<FieldElement51, (bool, FieldElement51)>((el) => {
-        //     return FieldElement51.SqrtRatioI(FieldElement51.One(), el);
-        // });
-
         var s = FieldElement.FromBytes(bytes);
 
         // Step 2.  Compute (X:Y:Z:T).

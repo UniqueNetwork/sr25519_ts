@@ -26,18 +26,6 @@ export class CompressedRistretto
     {
         return this.compressedRistrettoBytes;
     }
-
-    // public bool Equals(CompressedRistretto other)
-    // {
-    //     for(var i = 0; i < 32; i++)
-    //     {
-    //         if (!(_compressedRistrettoBytes[i] == other._compressedRistrettoBytes[i]))
-    //         {
-    //             return false;
-    //         }
-    //     }
-    //     return true;
-    // }
 }
 
 export class RistrettoBasepointTable
@@ -134,11 +122,6 @@ export class RistrettoPoint
     /// Compress this point using the Ristretto encoding.
     Compress(): CompressedRistretto
     {
-        // var invsqrt = 
-        // new Func<FieldElement51, (bool, FieldElement51)>((el) => {
-        //     return FieldElement51.SqrtRatioI(FieldElement51.One(), el);
-        // });
-
         var X = this.Ep.X;
         var Y = this.Ep.Y;
         var Z = this.Ep.Z;
