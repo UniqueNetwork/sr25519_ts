@@ -407,7 +407,7 @@ export class Scalar {
             bytes[i] >>= 3; // divide by 8
             bytes[i] += low;
             res[i] = bytes[i];
-            low = (r << 5);
+            low = (r << 5)%256;
         }
 
         return res;

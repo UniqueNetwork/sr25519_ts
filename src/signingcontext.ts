@@ -1,7 +1,8 @@
 import { Transcript, getBytesU32 } from "./merlin";
 import { randomBytes } from "@noble/hashes/utils";
 import { Scalar, ScalarAdd, ScalarMul, ScalarBigintToBytesForm, ScalarBytesToBigintForm } from "./scalar";
-import { RistrettoBasepointTable } from "./ristretto";
+import { RistrettoBasepointTable, RistrettoPoint } from "./ristretto";
+import { EdwardsPoint } from "./edwardsPoint";
 
 interface ISigningContext
 {
@@ -18,6 +19,15 @@ export class SecretKey{
         // TODO add size != 64 error 
         let r: SecretKey = new SecretKey();
         r.key = Scalar.FromBytes(bytes.slice(0,32));
+        r.nonce = bytes.slice(32,64);
+       return r;
+    }
+
+    static FromBytes095(bytes: Uint8Array): SecretKey {
+        // TODO add size != 64 error 
+        let r: SecretKey = new SecretKey();
+        // r.key = Scalar.FromBytes(bytes.slice(0,32));
+        r.key = Scalar.FromBytes(Scalar.DivideScalarBytesByCofactor(bytes.slice(0,32)));
         r.nonce = bytes.slice(32,64);
        return r;
     }
@@ -47,6 +57,15 @@ export class RandomGenerator{
 class Signature{
     public R: Uint8Array;
     public S: Uint8Array;
+
+    FromBytes(bytes: Uint8Array)
+    {
+        this.R = new Uint8Array(32);
+        this.S = new Uint8Array(32);
+
+        this.R.set(bytes.slice(0,32));
+        this.S.set(bytes.slice(32,64));
+    }
 
     ToBytes() 
     {
@@ -188,12 +207,31 @@ export class SigningContext085 implements ISigningContext
     {
         return this.ts;
     }
-3
+
+    verify(st: SigningTranscript, signature: Uint8Array, publicKey: PublicKey) : boolean
+    {
+        var sig = new Signature();
+        sig.FromBytes(signature);
+
+        st.SetProtocolName(Buffer.from("Schnorr-sig", 'ascii'));
+        st.CommitPointBytes(Buffer.from("sign:pk", 'ascii'), publicKey.key);
+        st.CommitPointBytes(Buffer.from("sign:R", 'ascii'), sig.R);
+
+        var k = st.ChallengeScalar(Buffer.from("sign:c", 'ascii')); // context, message, A/public_key, R=rG
+        
+        var A = EdwardsPoint.Decompress(publicKey.key);
+        var negA = A.Negate();
+
+        var R = RistrettoPoint.VartimeDoubleScalarMulBasepoint(Scalar.FromBytes(k), negA, Scalar.FromBytes(sig.S));
+
+        return new RistrettoPoint(R).Compress().ToBytes() == (sig.R);
+    }
+
     // public static Signature 
     sign(st: SigningTranscript, secretKey: SecretKey, publicKey: PublicKey, rng: RandomGenerator) : Signature
     {
         // st.SetProtocolName(GetStrBytes("Schnorr-sig"));
-        st.SetProtocolName(Buffer.from("Schnorr-sig", 'ascii'));// (""));
+        st.SetProtocolName(Buffer.from("Schnorr-sig", 'ascii'));
         // st.CommitPoint(GetStrBytes("sign:pk"), publicKey.Key);
         st.CommitPointBytes(Buffer.from("sign:pk", 'ascii'), publicKey.key);
 

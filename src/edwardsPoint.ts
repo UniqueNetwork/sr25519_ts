@@ -79,8 +79,8 @@ export class EdwardsPoint
         //  invsqrt(v * u2_sqr);
         var I = FieldElement.SqrtRatioI(FieldElement.One(), v.Mul(u2_sqr)); // 1/sqrt(v*u_2²)
 
-        var Dx = I[1].Mul(u2);         // 1/sqrt(v)
-        var Dy = I[1].Mul(Dx).Mul(v); // 1/u2
+        var Dx = I.i1.Mul(u2);         // 1/sqrt(v)
+        var Dy = I.i1.Mul(Dx).Mul(v); // 1/u2
 
         // x == | 2s/sqrt(v) | == + sqrt(4s²/(ad(1+as²)² - (1-as²)²))
         var x = (s.Add(s)).Mul(Dx);

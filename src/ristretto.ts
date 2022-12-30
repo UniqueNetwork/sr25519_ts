@@ -96,14 +96,14 @@ export class RistrettoPoint
             if (aNaf[i] > 0)
             {
                 let t1 = t.ToExtended();
-                let i1 = Math.abs((-1 * aNaf[i]) / 2);
+                let i1 = Math.floor( Math.abs((-1 * aNaf[i]) / 2));
                 let t2 = tableA.Pnp[i1];
                 t = t1.AddPnp(t2);
             }
             else if (aNaf[i] < 0)
             {
                 let t1 = t.ToExtended();
-                let i1 = Math.abs((-1 * aNaf[i]) / 2);
+                let i1 = Math.floor(Math.abs((-1 * aNaf[i]) / 2));
                 let t2 = tableA.Pnp[i1];
                 t = t1.SubPnp(t2);
             }
@@ -111,14 +111,14 @@ export class RistrettoPoint
             if (bNaf[i] > 0)
             {
                 let t1 = t.ToExtended();
-                let i1 = Math.abs((-1 * bNaf[i]) / 2);
+                let i1 = Math.floor(Math.abs((-1 * bNaf[i]) / 2));
                 let t2 = tableB.affineNielsPoints[i1];
                 t = t1.AddAnp(t2);
             }
             else if (bNaf[i] < 0)
             {
                 let t1 = t.ToExtended();
-                let i1 = Math.abs((-1 * bNaf[i]) / 2);
+                let i1 =  Math.floor(Math.abs((-1 * bNaf[i]) / 2));
                 let t2 = tableB.affineNielsPoints[i1];
                 t = t1.SubAnp(t2);
             }

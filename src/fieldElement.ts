@@ -95,11 +95,11 @@ export class FieldElement
         // // load bits [ 48,112), shift to [ 51,112)
         res.data[1] = load8(bytes.slice(6,6+8)) >> 3n & low51BitMask;
         // // load bits [ 96,160), shift to [102,160)
-        res.data[2] = load8(bytes.slice(6,12+8)) >> 6n & low51BitMask;
+        res.data[2] = load8(bytes.slice(12,12+8)) >> 6n & low51BitMask;
         // // load bits [152,216), shift to [153,216)
-        res.data[3] = load8(bytes.slice(6,19+8)) >> 1n & low51BitMask;
+        res.data[3] = load8(bytes.slice(19,19+8)) >> 1n & low51BitMask;
         // // load bits [192,256), shift to [204,112)
-        res.data[3] = load8(bytes.slice(24,19+8)) >> 12n & low51BitMask;
+        res.data[4] = load8(bytes.slice(24,24+8)) >> 12n & low51BitMask;
         return res;
     }
 

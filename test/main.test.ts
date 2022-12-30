@@ -9,18 +9,20 @@ beforeAll(async () => {
 })
 
 describe('main', async () => {
-  test('sign', async () => {
+  test('sign with random keys', async () => {
     // test message: 'abc'
     const message = Uint8Array.from([97, 98, 99])
 
-    // new keys
-    const publicKey = Uint8Array.from([212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125]);
-    const secretKey = Uint8Array.from([51, 166, 243, 9, 63, 21, 138, 113, 9, 246, 121, 65, 11, 239, 26, 12, 84, 22, 129, 69, 224, 206, 203, 77, 240, 6, 193, 194, 255, 251, 31, 9, 146, 90, 34, 93, 151, 170, 0, 104, 45, 106, 89, 185, 91, 24, 120, 12, 16, 215, 3, 35, 54, 232, 143, 52, 66, 180, 35, 97, 244, 166, 96, 17]);
+    var mn = polkadotUtilCrypto.mnemonicToLegacySeed(polkadotUtilCrypto.mnemonicGenerate(18));
+    var kp = polkadotUtilCrypto.sr25519PairFromSeed(mn);
+
+    const publicKey = kp.publicKey;
+    const secretKey = kp.secretKey;
 
     const controlSignature = polkadotUtilCrypto.sr25519Sign(message, {publicKey, secretKey})
     console.log(controlSignature);
     const controlIsValid = polkadotUtilCrypto.sr25519Verify(message, controlSignature, publicKey)
-    expect(controlIsValid).toBe(true) // fails here
+    expect(controlIsValid).toBe(true)
 
     const signature = Sr25519.sign(message, {publicKey, secretKey})
     const isValid = polkadotUtilCrypto.sr25519Verify(message, signature, publicKey)
@@ -31,7 +33,6 @@ describe('main', async () => {
     // test message: 'abc'
     const message = Uint8Array.from([97, 98, 99])
 
-    // Wrong keys format!
     // 42 format:     5GuuxfuxbvaiwteUrV9U7Mj2Fz7TWK84WhLaZdMMJRvSuzr4
     // Kusama format: HRXczFqEHbehYTvdBxX1K62QaPhJywEy5BKxHdJnE8wfHH1
     // public key:    0xd678b3e00c4238888bbf08dbbe1d7de77c3f1ca1fc71a5a283770f06f7cd1205
@@ -46,6 +47,6 @@ describe('main', async () => {
     const signature = Sr25519.sign(message, {publicKey, secretKey})
     const isValid = polkadotUtilCrypto.sr25519Verify(message, signature, publicKey)
 
-    expect(isValid).toBe(true) // fails here
+    expect(isValid).toBe(true)
   })
 })
