@@ -26,7 +26,6 @@ export class SecretKey{
     static FromBytes095(bytes: Uint8Array): SecretKey {
         // TODO add size != 64 error 
         let r: SecretKey = new SecretKey();
-        // r.key = Scalar.FromBytes(bytes.slice(0,32));
         r.key = Scalar.FromBytes(Scalar.DivideScalarBytesByCofactor(bytes.slice(0,32)));
         r.nonce = bytes.slice(32,64);
        return r;
@@ -163,12 +162,6 @@ export class SigningTranscript {
 
     WitnessScalarFR(ts: Transcript, label: Uint8Array, nonce: Uint8Array, rng: RandomGenerator): Uint8Array
     {
-        // byte[] bt = new byte[64];
-        // bt.Initialize();
-        // ts.WitnessBytes(label, ref bt, nonce, rng);
-
-        // return Scalar.FromBytesModOrderWide(bt);
-
         let t = ts.WitnessBytes(label, nonce, rng);
 
         // Fill bytes  size = 64
@@ -230,9 +223,7 @@ export class SigningContext085 implements ISigningContext
     // public static Signature 
     sign(st: SigningTranscript, secretKey: SecretKey, publicKey: PublicKey, rng: RandomGenerator) : Signature
     {
-        // st.SetProtocolName(GetStrBytes("Schnorr-sig"));
         st.SetProtocolName(Buffer.from("Schnorr-sig", 'ascii'));
-        // st.CommitPoint(GetStrBytes("sign:pk"), publicKey.Key);
         st.CommitPointBytes(Buffer.from("sign:pk", 'ascii'), publicKey.key);
 
         let r = st.WitnessScalarLabel(Buffer.from("signing", 'ascii'), secretKey.nonce, rng);
@@ -245,21 +236,13 @@ export class SigningContext085 implements ISigningContext
         st.CommitPoint(Buffer.from("sign:R", 'ascii'), R);
 
         var k = st.ChallengeScalar(Buffer.from("sign:c", 'ascii'));  // context, message, A/public_key, R=rG
-        // k.Recalc();
-        // secretKey.key.Recalc();
-        // r.Recalc();
-
-        // var scalar = k.ScalarInner * secretKey.key.ScalarInner + r.ScalarInner;
         var scalar = ScalarAdd(ScalarMul(ScalarBytesToBigintForm(k), 
             ScalarBytesToBigintForm(secretKey.key.bytes)), ScalarBytesToBigintForm(r));
 
-       // var s = new Scalar { ScalarBytes = scalar.ToBytes() };
-        // s.Recalc();
         var sig = new Signature();
         sig.R = R.ToBytes();
         sig.S = ScalarBigintToBytesForm(scalar);
 
         return sig;
-        // return new Signature { R = R, S = s };
     }
 }

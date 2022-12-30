@@ -1,34 +1,6 @@
 import { Strobe, operationMap, Flag, Operation } from "./strobe";
 import { RandomGenerator } from "./signingcontext";
 
-// class TranscriptRng
-// {
-//     // static Random _rnd;
-//     // public Transcript _strobe { get; private set; }
-//     // private byte[] _strobeBytes;
-//     // private int _pointer;
-
-//     constructor(strobe: Transcript)
-//     {
-//         // if (_rnd == null)
-//         // {
-//         //     _rnd = new Random();
-//         // }
-
-//         // _strobe = strobe;
-//         // _strobeBytes = Transcript.StringToByteArray(strobe._obj.DebugPrintState());
-//         // _pointer = 0;
-//     }
-
-//     public override void FillBytes(ref byte[] dst)
-//     {
-//        _strobe.MetaAd(BitConverter.GetBytes(dst.Length), false);
-//         dst = _strobe.Prf(dst.Length, false);
-
-//         return this.Prf(size, false) as Uint8Array;
-//     }
-// }
-
 export function getBytesU32(num: number): Uint8Array{
     let r = new Uint8Array(4);
     r[0] = num % 256;
@@ -37,7 +9,6 @@ export function getBytesU32(num: number): Uint8Array{
     r[3] = num << 24 % 256;
     return r;
 }
-
 
 class TranscriptRngBuilder {
 
@@ -58,28 +29,14 @@ class TranscriptRngBuilder {
 
     Finalize(rng: RandomGenerator): Transcript  //TranscriptRngBuilder
     {
-        //var bytes = new Uint8Array(32);
-        var bytes = rng.GetHardcoded();
+        var bytes = rng.GetRandomArrayU8_32();
 
         var newStrobe = this.strobe.Clone();
         newStrobe.MetaAd(Buffer.from("rng", 'ascii'), false);
         newStrobe.Key(bytes, false);
 
-        // return new TranscriptRng(newStrobe);
         return newStrobe;
     }
-
-    // public TranscriptRng(strobe: Transcript)
-    // {
-    //     // if (_rnd == null)
-    //     // {
-    //     //     _rnd = new Random();
-    //     // }
-
-    //     //_strobe = strobe;
-    //     _strobeBytes = Transcript.StringToByteArray(strobe._obj.DebugPrintState());
-    //     _pointer = 0;
-    // }
 }
 
 export class Transcript{
@@ -154,7 +111,6 @@ export class Transcript{
     AppendU64(label: Uint8Array, message: Uint8Array)
     {
         this.AppendMessage(label, message);
-        // AppendMessage(label, EncodeU64(message));
     }
 
     ChallengeBytes(label: Uint8Array, size: number): Uint8Array
@@ -173,27 +129,6 @@ export class Transcript{
         return this.WitnessBytesRngL(label, ns, rng);
     }
 
-    //WitnessBytesRng(nonce_seeds: Array<Uint8Array>, rng: RandomGenerator): Uint8Array
-    //{
-        //let mut br = self.build_rng();
-        //for ns in nonce_seeds {
-        //    br = br.commit_witness_bytes(b"", ns);
-        //}
-        //let mut r = br.finalize(&mut rng);
-        //r.fill_bytes(dest)
-
-
-
-        // var br = new BuildRng();
-        // var emptyLabel = new byte[] { };
-        // foreach (var ns in nonce_seeds)
-        // {
-        //     br = br.RekeyWithWitnessBytes(emptyLabel, ns);
-        // }
-        // var r = br.Finalize(rng);
-        // r.FillBytes(ref dest);
-    //}
-
     WitnessBytesRngL(label: Uint8Array,nonce_seeds: Array<Uint8Array>, rng: RandomGenerator): Transcript
     {
         var br = this.BuildRng();
@@ -203,16 +138,6 @@ export class Transcript{
         });
 
         return br.Finalize(rng);
-
-        // this.MetaAd(Uint8Array.from([dst.Length]), false);
-        // dst = _strobe.Prf(dst.Length, false);
-
-        // _strobe.MetaAd(BitConverter.GetBytes(dst.Length), false);
-        // dst = _strobe.Prf(dst.Length, false);
-
-        // return this.Prf(size, false) as Uint8Array;
-
-        // r.FillBytes(ref dest);
     }
 
     BuildRng(): TranscriptRngBuilder

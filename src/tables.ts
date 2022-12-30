@@ -1,6 +1,5 @@
 import { LookupTable } from "./edwardsBasepointTable"
 import { AffineNielsPoint } from "./affineNielsPoint";
-import { EdwardsPoint } from "./edwardsPoint";
 import { FieldElement } from "./fieldElement";
 import { EdwardsBasepointTable } from "./edwardsBasepointTable";
 

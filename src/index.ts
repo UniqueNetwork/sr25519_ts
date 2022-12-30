@@ -14,10 +14,7 @@ export const Sr25519 = {
     let sigcont = new sc.SigningContext085(Buffer.from("substrate", 'ascii'));
     let st = new sc.SigningTranscript(sigcont);
     sigcont.Bytes(message);
-    // signingContext.ts = signingContext.Bytes(message);
-
     var s = sigcont.sign(st, sk, pk, new sc.RandomGenerator());
-
 
     //signature should be 64 bytes length
     return s.ToBytes();

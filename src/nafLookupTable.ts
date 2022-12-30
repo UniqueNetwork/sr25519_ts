@@ -7,11 +7,6 @@ export class NafLookupTable5PNP
 {
     public Pnp: ProjectiveNielsPoint[]
 
-    // constructor(n: number)
-    // {
-    //     this.Pnp = new Array(n);
-    // }
-
     Select(v: number) : ProjectiveNielsPoint
     {
         return this.Pnp[v / 2];

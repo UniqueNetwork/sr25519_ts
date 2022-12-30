@@ -601,45 +601,6 @@ export class FieldElement
 
     Invert() : FieldElement
     {
-
-        // Duplicate????
-        // var pow22501 = new Func<FieldElement51, (FieldElement51, FieldElement51)>(fe =>
-        // {
-        //     // Instead of managing which temporary variables are used
-        //     // for what, we define as many as we need and leave stack
-        //     // allocation to the compiler
-        //     //
-        //     // Each temporary variable t_i is of the form (self)^e_i.
-        //     // Squaring t_i corresponds to multiplying e_i by 2,
-        //     // so the pow2k function shifts e_i left by k places.
-        //     // Multiplying t_i and t_j corresponds to adding e_i + e_j.
-        //     //
-        //     // Temporary t_i                      Nonzero bits of e_i
-        //     //
-        //     var t0 = fe.Square();             // 1         e_0 = 2^1
-        //     var t1 = t0.Square().Square();    // 3         e_1 = 2^3
-        //     var t2 = fe.Mul(t1);              // 3,0       e_2 = 2^3 + 2^0
-        //     var t3 = t0.Mul(t2);               // 3,1,0
-        //     var t4 = t3.Square();             // 4,2,1
-        //     var t5 = t2.Mul(t4);               // 4,3,2,1,0
-        //     var t6 = t5.Pow2k(5);             // 9,8,7,6,5
-        //     var t7 = t6.Mul(t5);               // 9,8,7,6,5,4,3,2,1,0
-        //     var t8 = t7.Pow2k(10);            // 19..10
-        //     var t9 = t8.Mul(t7);               // 19..0
-        //     var t10 = t9.Pow2k(20);            // 39..20
-        //     var t11 = t10.Mul(t9);              // 39..0
-        //     var t12 = t11.Pow2k(10);           // 49..10
-        //     var t13 = t12.Mul(t7);              // 49..0
-        //     var t14 = t13.Pow2k(50);           // 99..50
-        //     var t15 = t14.Mul(t13);             // 99..0
-        //     var t16 = t15.Pow2k(100);          // 199..100
-        //     var t17 = t16.Mul(t15);             // 199..0
-        //     var t18 = t17.Pow2k(50);           // 249..50
-        //     var t19 = t18.Mul(t13);             // 249..0
-
-        //     return (t19, t3);
-        // });
-
         // The bits of p-2 = 2^255 -19 -2 are 11010111111...11.
         //
         //                                 nonzero bits of exponent

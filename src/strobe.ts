@@ -151,11 +151,6 @@ export class Strobe{
             1,this.strobeR + 2,
             1,0, /* Empty NIST perso string */
             1,12*8, /* 12 = strlen("STROBEvX.Y.Z") */
-            // 'S'.charCodeAt(0),'T'.charCodeAt(0),'R'.charCodeAt(0),'O'.charCodeAt(0),'B'.charCodeAt(0),'E'.charCodeAt(0),
-            // 'v'.charCodeAt(0),
-            // '0'.charCodeAt(0)+STROBE_INTEROP_V_MAJOR,'.'.charCodeAt(0),
-            // '0'.charCodeAt(0)+STROBE_INTEROP_V_MINOR,'.'.charCodeAt(0),
-            // '0'.charCodeAt(0)+STROBE_INTEROP_V_PATCH,
         ]);
 
         
@@ -165,23 +160,13 @@ export class Strobe{
         first.set(f);
         first.set(s, f.length);
 
-
-        // keccak_f800
-        // this.state = sha3.keccak_224(proto);
-
         this.posBegin = 0;
         this.pos = 0;
         this.state = new Uint8Array(200);
 
-        // f[0] = FLAG_A|FLAG_M;
         this.strobe_duplex(first, 0, first.byteLength, false, false, true);
-
         this.initialized = true;
-       // var operateBytes: Uint8Array = new Uint8Array(description.length);
-        
         const operateBytes = Buffer.from(description, 'ascii');
-
-
         this.operate(true, operationMap.get(Operation.Ad) as Flag, operateBytes, 0, operateBytes.length, 0, false);
     }
 
