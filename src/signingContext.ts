@@ -16,6 +16,16 @@ interface ISigningContext {
   GetTranscript: () => Transcript
 }
 
+function isUint8ArrayEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false
+
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false
+  }
+
+  return true
+}
+
 export class SecretKey {
   nonce: Uint8Array
   key: Scalar
@@ -236,8 +246,9 @@ export class SigningContext085 implements ISigningContext {
       Scalar.FromBytes(sig.S)
     )
 
-    // todo - wrong arrays comparison
-    return new RistrettoPoint(R).Compress().ToBytes() === sig.R
+    const expected = new RistrettoPoint(R).Compress().ToBytes()
+
+    return isUint8ArrayEqual(sig.R, expected)
   }
 
   // public static Signature
