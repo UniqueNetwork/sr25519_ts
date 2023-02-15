@@ -1,4 +1,4 @@
-import { Keccak } from './keccakf1600'
+import { Keccak } from "./external/keccakf1600"
 
 export const LFACTOR = 0x51da312547e1b
 export const L = BigUint64Array.from([
@@ -6,21 +6,21 @@ export const L = BigUint64Array.from([
   0x000dea2f79cd6581n,
   0x000000000014def9n,
   0x0000000000000000n,
-  0x0000100000000000n
+  0x0000100000000000n,
 ])
 export const R = BigUint64Array.from([
   0x000f48bd6721e6edn,
   0x0003bab5ac67e45an,
   0x000fffffeb35e51bn,
   0x000fffffffffffffn,
-  0x00000fffffffffffn
+  0x00000fffffffffffn,
 ])
 export const RR = BigUint64Array.from([
   0x0009d265e952d13bn,
   0x000d63c715bea69fn,
   0x0005be65cb687604n,
   0x0003dceec73d217fn,
-  0x000009411b7c309an
+  0x000009411b7c309an,
 ])
 export const U64size = BigInt(2 ** 64)
 
@@ -28,25 +28,25 @@ class Tuple2<T = any> {
   public i0: T
   public i1: T
 
-  constructor (a: T, b: T) {
+  constructor(a: T, b: T) {
     this.i0 = a
     this.i1 = b
   }
 }
 
-export function AsU8 (a: number) {
+export function AsU8(a: number) {
   return a % 256
 }
 
-export function AsU8bn (a: bigint): number {
+export function AsU8bn(a: bigint): number {
   return Number(a % 256n)
 }
 
-export function AsU64Bn (val: any): number {
+export function AsU64Bn(val: any): number {
   return Number(BigInt(val) % BigInt(U64size))
 }
 
-export function ScalarBigintToBytesForm (scalar: BigUint64Array): Uint8Array {
+export function ScalarBigintToBytesForm(scalar: BigUint64Array): Uint8Array {
   const s = new Uint8Array(32)
 
   s[0] = AsU8bn(scalar[0] >> 0n)
@@ -85,7 +85,7 @@ export function ScalarBigintToBytesForm (scalar: BigUint64Array): Uint8Array {
   return s
 }
 
-export function FloatArrayToBytes (scalar: Float64Array): Uint8Array {
+export function FloatArrayToBytes(scalar: Float64Array): Uint8Array {
   const s = new Uint8Array(32)
 
   s[0] = AsU8(scalar[0] >> 0)
@@ -124,7 +124,7 @@ export function FloatArrayToBytes (scalar: Float64Array): Uint8Array {
   return s
 }
 
-export function ScalarBytesToBigintForm (scalar: Uint8Array): BigUint64Array {
+export function ScalarBytesToBigintForm(scalar: Uint8Array): BigUint64Array {
   // let dt = new Float64Array(5);
   const dt = new BigUint64Array(5)
   for (let i = 0; i < 4; i++) {
@@ -146,13 +146,13 @@ export function ScalarBytesToBigintForm (scalar: Uint8Array): BigUint64Array {
   return s
 }
 
-function WrappingSub (a: bigint, b: bigint): bigint {
+function WrappingSub(a: bigint, b: bigint): bigint {
   // convert from signed to unsigned 64 bits integer
   const r = (a - b) % U64size
   return r > 0 ? r : U64size + r
 }
 
-export function ScalarSub (
+export function ScalarSub(
   a: BigUint64Array,
   b: BigUint64Array
 ): BigUint64Array {
@@ -177,7 +177,7 @@ export function ScalarSub (
   return difference
 }
 
-export function ScalarAdd (
+export function ScalarAdd(
   a: BigUint64Array,
   b: BigUint64Array
 ): BigUint64Array {
@@ -194,7 +194,7 @@ export function ScalarAdd (
   return ScalarSub(sum, L)
 }
 
-export function ScalarMul (
+export function ScalarMul(
   a: BigUint64Array,
   b: BigUint64Array
 ): BigUint64Array {
@@ -202,7 +202,7 @@ export function ScalarMul (
   return MontgomeryReduce(MulInternal(ab, RR))
 }
 
-export function _m (x: bigint, y: bigint): bigint {
+export function _m(x: bigint, y: bigint): bigint {
   return BigInt(x) * BigInt(y)
 }
 
@@ -210,18 +210,18 @@ export function _m (x: bigint, y: bigint): bigint {
 //   return (BigInt(a) * BigInt(b)) % U64size
 // }
 
-function _part1 (sum: bigint): Tuple2<bigint> {
+function _part1(sum: bigint): Tuple2<bigint> {
   const p = (sum * BigInt(LFACTOR)) & ((1n << 52n) - 1n)
 
   return new Tuple2(p, (sum + _m(p, BigInt(L[0]))) >> 52n)
 }
 
-function _part2 (sum: bigint): Tuple2<bigint> {
+function _part2(sum: bigint): Tuple2<bigint> {
   const w = sum % U64size & ((1n << 52n) - 1n)
   return new Tuple2(w, sum >> 52n)
 }
 
-function MontgomeryReduce (limbs: bigint[]) {
+function MontgomeryReduce(limbs: bigint[]) {
   const l = L
 
   // the first half computes the Montgomery adjustment factor n, and begins adding n*l to make limbs divisible by R
@@ -259,7 +259,7 @@ function MontgomeryReduce (limbs: bigint[]) {
   return ScalarSub(BigUint64Array.from([r0.i0, r1.i0, r2.i0, r3.i0, r4]), l)
 }
 
-function MulInternal (a: BigUint64Array, b: BigUint64Array): bigint[] {
+function MulInternal(a: BigUint64Array, b: BigUint64Array): bigint[] {
   const z = Array(9)
 
   z[0] = _m(a[0], b[0])
@@ -280,7 +280,7 @@ function MulInternal (a: BigUint64Array, b: BigUint64Array): bigint[] {
   return z
 }
 
-function MontgomeryMul (a: BigUint64Array, b: BigUint64Array): BigUint64Array {
+function MontgomeryMul(a: BigUint64Array, b: BigUint64Array): BigUint64Array {
   return MontgomeryReduce(MulInternal(a, b))
 }
 
@@ -302,7 +302,7 @@ function MontgomeryMul (a: BigUint64Array, b: BigUint64Array): BigUint64Array {
 //   return r
 // }
 
-export function FromBytesWide (data: Uint8Array): BigUint64Array {
+export function FromBytesWide(data: Uint8Array): BigUint64Array {
   const words = new BigUint64Array(8)
 
   for (let i = 0; i < 8; i++) {
@@ -336,7 +336,7 @@ export function FromBytesWide (data: Uint8Array): BigUint64Array {
   return ScalarAdd(hi, lo)
 }
 
-export function Pack (data: BigUint64Array): Uint8Array {
+export function Pack(data: BigUint64Array): Uint8Array {
   return ScalarBigintToBytesForm(data)
   // let dt = new BigUint64Array(5);
   // for (let i = 0; i < 4; i++)
@@ -360,34 +360,34 @@ export function Pack (data: BigUint64Array): Uint8Array {
   // return s;
 }
 
-function botHalf (x: number) {
+function botHalf(x: number) {
   return x & 15
 }
 
-function topHalf (x: number) {
+function topHalf(x: number) {
   return (x >> 4) & 15
 }
 
 export class Scalar {
   bytes: Uint8Array
 
-  static FromBytes (data: Uint8Array): Scalar {
+  static FromBytes(data: Uint8Array): Scalar {
     // TODO add size !== 32 error
     const s = new Scalar()
     s.bytes = data
     return s
   }
 
-  static FromBytesModOrderWide (data: Uint8Array): Uint8Array {
+  static FromBytesModOrderWide(data: Uint8Array): Uint8Array {
     const tt1 = FromBytesWide(data)
     return Pack(tt1)
   }
 
-  ToBigInt (): bigint {
+  ToBigInt(): bigint {
     return Keccak.getUInt64FromBytes(this.bytes)
   }
 
-  static ToRadix16 (bytes: Uint8Array): number[] {
+  static ToRadix16(bytes: Uint8Array): number[] {
     const output: number[] = []
 
     // Step 1: change radix.
@@ -411,7 +411,7 @@ export class Scalar {
     return output
   }
 
-  static DivideScalarBytesByCofactor (bytes: Uint8Array): Uint8Array {
+  static DivideScalarBytesByCofactor(bytes: Uint8Array): Uint8Array {
     const res = new Uint8Array(bytes.length)
     let low = 0
 
@@ -427,7 +427,7 @@ export class Scalar {
   }
 
   // sbyte[]
-  NonAdjacentForm (size: number): number[] {
+  NonAdjacentForm(size: number): number[] {
     // sbyte[] naf = new sbyte[256];
     const naf = new Array(256)
 

@@ -1,4 +1,4 @@
-import * as sc from './signingContext'
+import * as sc from "./signingContext"
 
 export interface Keypair {
   publicKey: Uint8Array
@@ -6,29 +6,45 @@ export interface Keypair {
 }
 
 export const Sr25519 = {
-  sign (message: Uint8Array, keypair: Keypair): Uint8Array {
-    const sk = sc.SecretKey.FromBytes095(keypair.secretKey)
-    const pk = sc.PublicKey.FromBytes(keypair.publicKey)
-    const sigcont = new sc.SigningContext085(Buffer.from('substrate', 'ascii'))
-    const st = new sc.SigningTranscript(sigcont)
-    sigcont.Bytes(message)
-    const s = sigcont.sign(st, sk, pk, new sc.RandomGenerator())
+  sign(message: Uint8Array, keypair: Keypair): Uint8Array {
+    const secretKey = sc.SecretKey.FromBytes095(keypair.secretKey)
+    const publicKey = sc.PublicKey.FromBytes(keypair.publicKey)
+
+    const signingContext = new sc.SigningContext085(
+      Buffer.from("substrate", "ascii")
+    )
+
+    const signingTranscript = new sc.SigningTranscript(signingContext)
+
+    signingContext.Bytes(message)
+
+    const signature = signingContext.sign(
+      signingTranscript,
+      secretKey,
+      publicKey,
+      new sc.RandomGenerator()
+    )
 
     // signature should be 64 bytes length
-    return s.ToBytes()
+    return signature.ToBytes()
   },
-  verify (
+  verify(
     message: Uint8Array,
     signature: Uint8Array,
     publicKey: Uint8Array
   ): boolean {
-    return false
+    // return false
 
-    // let pk = sc.PublicKey.FromBytes(publicKey);
-    // let sigcont = new sc.SigningContext085(Buffer.from("substrate", 'ascii'));
-    // let st = new sc.SigningTranscript(sigcont);
-    // sigcont.Bytes(message);
+    let contextPublicKey = sc.PublicKey.FromBytes(publicKey)
 
-    // return sigcont.verify(st, signature, pk);
-  }
+    let signingContext = new sc.SigningContext085(
+      Buffer.from("substrate", "ascii")
+    )
+
+    let signingTranscript = new sc.SigningTranscript(signingContext)
+
+    signingContext.Bytes(message)
+
+    return signingContext.verify(signingTranscript, signature, contextPublicKey)
+  },
 }

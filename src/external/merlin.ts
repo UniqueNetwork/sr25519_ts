@@ -1,5 +1,5 @@
-import { Strobe, operationMap, Operation } from "./strobe"
-import { type RandomGenerator } from "./signingContext"
+import { Strobe, Operation, operationToFlagMap } from "./strobe"
+import { type RandomGenerator } from "../signingContext"
 
 export function getBytesU32(num: number): Uint8Array {
   const r = new Uint8Array(4)
@@ -70,7 +70,7 @@ export class Transcript {
   MetaAd(data: Uint8Array, more: boolean) {
     const error = this.obj.operate(
       true,
-      operationMap.get(Operation.Ad)!,
+      operationToFlagMap[Operation.Ad],
       data,
       0,
       data.length,
@@ -85,7 +85,7 @@ export class Transcript {
   Ad(data: Uint8Array, more: boolean) {
     const error = this.obj.operate(
       false,
-      operationMap.get(Operation.Ad),
+      operationToFlagMap[Operation.Ad],
       data,
       0,
       data.length,
@@ -101,7 +101,7 @@ export class Transcript {
     const ed = new Uint8Array(0)
     const result = this.obj.operate(
       false,
-      operationMap.get(Operation.Prf),
+      operationToFlagMap[Operation.Prf],
       ed,
       0,
       0,
@@ -118,7 +118,7 @@ export class Transcript {
   Key(data: Uint8Array, more: boolean) {
     const error = this.obj.operate(
       false,
-      operationMap.get(Operation.Key),
+      operationToFlagMap[Operation.Key],
       data,
       0,
       data.length,

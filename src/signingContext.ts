@@ -1,14 +1,14 @@
-import { Transcript, getBytesU32 } from './merlin'
-import { randomBytes } from '@noble/hashes/utils'
+import { Transcript, getBytesU32 } from "./external/merlin"
+import { randomBytes } from "@noble/hashes/utils"
 import {
   Scalar,
   ScalarAdd,
   ScalarMul,
   ScalarBigintToBytesForm,
-  ScalarBytesToBigintForm
-} from './scalar'
-import { RistrettoBasepointTable, RistrettoPoint } from './ristretto'
-import { EdwardsPoint } from './edwardsPoint'
+  ScalarBytesToBigintForm,
+} from "./scalar"
+import { RistrettoBasepointTable, RistrettoPoint } from "./ristretto"
+import { EdwardsPoint } from "./edwardsPoint"
 
 interface ISigningContext {
   BytesClone: (data: Uint8Array) => Transcript
@@ -20,44 +20,51 @@ export class SecretKey {
   nonce: Uint8Array
   key: Scalar
 
-  static FromBytes (bytes: Uint8Array): SecretKey {
-    // TODO add size !== 64 error
+  static FromBytes(bytes: Uint8Array): SecretKey {
+    if (bytes.length !== 64) throw new Error(`Invalid secret key length`)
+
     const r: SecretKey = new SecretKey()
     r.key = Scalar.FromBytes(bytes.slice(0, 32))
     r.nonce = bytes.slice(32, 64)
     return r
   }
 
-  static FromBytes095 (bytes: Uint8Array): SecretKey {
-    // TODO add size !== 64 error
-    const r: SecretKey = new SecretKey()
-    r.key = Scalar.FromBytes(
+  static FromBytes095(bytes: Uint8Array): SecretKey {
+    if (bytes.length !== 64) throw new Error(`Invalid secret key length`)
+
+    const secretKey: SecretKey = new SecretKey()
+
+    secretKey.key = Scalar.FromBytes(
       Scalar.DivideScalarBytesByCofactor(bytes.slice(0, 32))
     )
-    r.nonce = bytes.slice(32, 64)
-    return r
+
+    secretKey.nonce = bytes.slice(32, 64)
+
+    return secretKey
   }
 }
 
 export class PublicKey {
   key: Uint8Array
 
-  static FromBytes (bytes: Uint8Array): PublicKey {
-    const pk = new PublicKey()
-    pk.key = bytes
-    return pk
+  static FromBytes(bytes: Uint8Array): PublicKey {
+    const publicKey = new PublicKey()
+
+    publicKey.key = bytes
+
+    return publicKey
   }
 }
 
 export class RandomGenerator {
-  GetRandomArrayU8_32 (): Uint8Array {
+  GetRandomArrayU8_32(): Uint8Array {
     return randomBytes(32)
   }
 
-  GetHardcoded (): Uint8Array {
+  GetHardcoded(): Uint8Array {
     return Uint8Array.from([
       77, 196, 92, 65, 167, 196, 215, 23, 222, 26, 136, 164, 123, 67, 115, 78,
-      178, 96, 208, 59, 8, 157, 203, 111, 157, 87, 69, 105, 155, 61, 111, 153
+      178, 96, 208, 59, 8, 157, 203, 111, 157, 87, 69, 105, 155, 61, 111, 153,
     ])
   }
 }
@@ -66,7 +73,7 @@ class Signature {
   public R: Uint8Array
   public S: Uint8Array
 
-  FromBytes (bytes: Uint8Array) {
+  FromBytes(bytes: Uint8Array) {
     this.R = new Uint8Array(32)
     this.S = new Uint8Array(32)
 
@@ -74,7 +81,7 @@ class Signature {
     this.S.set(bytes.slice(32, 64))
   }
 
-  ToBytes () {
+  ToBytes() {
     const mergedArray = new Uint8Array(this.R.length + this.S.length)
     mergedArray.set(this.R)
     mergedArray.set(this.S, this.R.length)
@@ -83,7 +90,7 @@ class Signature {
   }
 }
 class CompressedRistretto {
-  ToBytes (): Uint8Array {
+  ToBytes(): Uint8Array {
     return new Uint8Array(2)
   }
 }
@@ -91,28 +98,28 @@ class CompressedRistretto {
 export class SigningTranscript {
   context: ISigningContext
 
-  constructor (context: ISigningContext) {
+  constructor(context: ISigningContext) {
     // _operations = new SigningTranscriptOperation();
     this.context = context
   }
 
-  SetProtocolName (label: Uint8Array) {
+  SetProtocolName(label: Uint8Array) {
     this.CommitBytesB(
       this.context.GetTranscript(),
-      Buffer.from('proto-name', 'ascii'),
+      Buffer.from("proto-name", "ascii"),
       label
     )
   }
 
-  CommitPoint (label: Uint8Array, compressed: CompressedRistretto) {
+  CommitPoint(label: Uint8Array, compressed: CompressedRistretto) {
     this.CommitBytesB(this.context.GetTranscript(), label, compressed.ToBytes())
   }
 
-  CommitPointBytes (label: Uint8Array, bytes: Uint8Array) {
+  CommitPointBytes(label: Uint8Array, bytes: Uint8Array) {
     this.CommitBytesB(this.context.GetTranscript(), label, bytes)
   }
 
-  WitnessScalarLabel (
+  WitnessScalarLabel(
     label: Uint8Array,
     bytes: Uint8Array,
     rng: RandomGenerator
@@ -120,33 +127,32 @@ export class SigningTranscript {
     return this.WitnessScalarFR(this.context.GetTranscript(), label, bytes, rng)
   }
 
-  WitnessScalar (bytes: Uint8Array, rng: RandomGenerator): Uint8Array {
+  WitnessScalar(bytes: Uint8Array, rng: RandomGenerator): Uint8Array {
     return this.WitnessScalarSR(this.context.GetTranscript(), bytes, rng)
   }
 
-  ChallengeScalar (label: Uint8Array): Uint8Array {
+  ChallengeScalar(label: Uint8Array): Uint8Array {
     const data = this.ChallengeBytes(label)
     return Scalar.FromBytesModOrderWide(data)
   }
 
-  ChallengeBytes (label: Uint8Array): Uint8Array {
-    const result = this.ChallengeBytesTL(this.context.GetTranscript(), label)
-    return result
+  ChallengeBytes(label: Uint8Array): Uint8Array {
+    return this.ChallengeBytesTL(this.context.GetTranscript(), label)
   }
 
-  ChallengeBytesTL (ts: Transcript, label: Uint8Array): Uint8Array {
+  ChallengeBytesTL(ts: Transcript, label: Uint8Array): Uint8Array {
     return ts.ChallengeBytes(label, 64)
   }
 
-  CommitBytesB (ts: Transcript, label: Uint8Array, bytes: Uint8Array) {
+  CommitBytesB(ts: Transcript, label: Uint8Array, bytes: Uint8Array) {
     ts.AppendMessage(label, bytes)
   }
 
-  CommitBytesS (ts: Transcript, label: string, bytes: Uint8Array) {
-    ts.AppendMessage(Buffer.from(label, 'ascii'), bytes)
+  CommitBytesS(ts: Transcript, label: string, bytes: Uint8Array) {
+    ts.AppendMessage(Buffer.from(label, "ascii"), bytes)
   }
 
-  CommitPointF (
+  CommitPointF(
     ts: Transcript,
     label: Uint8Array,
     compressedRistretto: Uint8Array
@@ -154,21 +160,21 @@ export class SigningTranscript {
     this.CommitBytesB(ts, label, compressedRistretto)
   }
 
-  WitnessScalarSR (
+  WitnessScalarSR(
     ts: Transcript,
     nonce: Uint8Array,
     rng: RandomGenerator
   ): Uint8Array {
     const t = ts.WitnessBytes(new Uint8Array(0), nonce, rng)
 
-    // Fill bytes  size = 64
+    // Fill bytes size = 64
     t.MetaAd(Uint8Array.from([64]), false)
     const dst = t.Prf(64, false)
 
     return Scalar.FromBytesModOrderWide(dst)
   }
 
-  WitnessScalarFR (
+  WitnessScalarFR(
     ts: Transcript,
     label: Uint8Array,
     nonce: Uint8Array,
@@ -187,27 +193,27 @@ export class SigningTranscript {
 export class SigningContext085 implements ISigningContext {
   ts: Transcript
 
-  constructor (context: Uint8Array) {
+  constructor(context: Uint8Array) {
     this.ts = new Transcript()
-    this.ts.Init('SigningContext')
+    this.ts.Init("SigningContext")
     this.ts.AppendMessage(new Uint8Array(), context)
   }
 
-  Bytes (data: Uint8Array) {
-    this.ts.AppendMessage(Buffer.from('sign-bytes', 'ascii'), data)
+  Bytes(data: Uint8Array) {
+    this.ts.AppendMessage(Buffer.from("sign-bytes", "ascii"), data)
   }
 
-  BytesClone (data: Uint8Array): Transcript {
+  BytesClone(data: Uint8Array): Transcript {
     const clone = this.ts.Clone()
-    clone.AppendMessage(Buffer.from('sign-bytes', 'ascii'), data)
+    clone.AppendMessage(Buffer.from("sign-bytes", "ascii"), data)
     return clone
   }
 
-  GetTranscript (): Transcript {
+  GetTranscript(): Transcript {
     return this.ts
   }
 
-  verify (
+  verify(
     st: SigningTranscript,
     signature: Uint8Array,
     publicKey: PublicKey
@@ -215,11 +221,11 @@ export class SigningContext085 implements ISigningContext {
     const sig = new Signature()
     sig.FromBytes(signature)
 
-    st.SetProtocolName(Buffer.from('Schnorr-sig', 'ascii'))
-    st.CommitPointBytes(Buffer.from('sign:pk', 'ascii'), publicKey.key)
-    st.CommitPointBytes(Buffer.from('sign:R', 'ascii'), sig.R)
+    st.SetProtocolName(Buffer.from("Schnorr-sig", "ascii"))
+    st.CommitPointBytes(Buffer.from("sign:pk", "ascii"), publicKey.key)
+    st.CommitPointBytes(Buffer.from("sign:R", "ascii"), sig.R)
 
-    const k = st.ChallengeScalar(Buffer.from('sign:c', 'ascii')) // context, message, A/public_key, R=rG
+    const k = st.ChallengeScalar(Buffer.from("sign:c", "ascii")) // context, message, A/public_key, R=rG
 
     const A = EdwardsPoint.Decompress(publicKey.key)
     const negA = A.Negate()
@@ -230,21 +236,22 @@ export class SigningContext085 implements ISigningContext {
       Scalar.FromBytes(sig.S)
     )
 
+    // todo - wrong arrays comparison
     return new RistrettoPoint(R).Compress().ToBytes() === sig.R
   }
 
   // public static Signature
-  sign (
+  sign(
     st: SigningTranscript,
     secretKey: SecretKey,
     publicKey: PublicKey,
     rng: RandomGenerator
   ): Signature {
-    st.SetProtocolName(Buffer.from('Schnorr-sig', 'ascii'))
-    st.CommitPointBytes(Buffer.from('sign:pk', 'ascii'), publicKey.key)
+    st.SetProtocolName(Buffer.from("Schnorr-sig", "ascii"))
+    st.CommitPointBytes(Buffer.from("sign:pk", "ascii"), publicKey.key)
 
     const r = st.WitnessScalarLabel(
-      Buffer.from('signing', 'ascii'),
+      Buffer.from("signing", "ascii"),
       secretKey.nonce,
       rng
     )
@@ -254,9 +261,9 @@ export class SigningContext085 implements ISigningContext {
     const tbl = new RistrettoBasepointTable()
     const R = tbl.Mul(sc).Compress()
 
-    st.CommitPoint(Buffer.from('sign:R', 'ascii'), R)
+    st.CommitPoint(Buffer.from("sign:R", "ascii"), R)
 
-    const k = st.ChallengeScalar(Buffer.from('sign:c', 'ascii')) // context, message, A/public_key, R=rG
+    const k = st.ChallengeScalar(Buffer.from("sign:c", "ascii")) // context, message, A/public_key, R=rG
     const scalar = ScalarAdd(
       ScalarMul(
         ScalarBytesToBigintForm(k),

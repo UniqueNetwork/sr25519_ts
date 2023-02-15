@@ -89,7 +89,20 @@ enum Role {
   None = 2,
 }
 
-export const operationMap = new Map<Operation, Flag>()
+// export const operationMap = new Map<Operation, Flag>()
+
+export const operationToFlagMap: Record<Operation, Flag> = {
+  [Operation.Ad]: Flag.FlagA,
+  [Operation.Key]: Flag.FlagA | Flag.FlagC,
+  [Operation.Prf]: Flag.FlagI | Flag.FlagA | Flag.FlagC,
+  [Operation.SendClr]: Flag.FlagA | Flag.FlagT,
+  [Operation.RecvClr]: Flag.FlagI | Flag.FlagA | Flag.FlagT,
+  [Operation.SendEnc]: Flag.FlagA | Flag.FlagC | Flag.FlagT,
+  [Operation.RecvEnc]: Flag.FlagI | Flag.FlagA | Flag.FlagC | Flag.FlagT,
+  [Operation.SendMac]: Flag.FlagC | Flag.FlagT,
+  [Operation.RecvMac]: Flag.FlagI | Flag.FlagC | Flag.FlagT,
+  [Operation.Ratchet]: Flag.FlagC,
+}
 
 // const CAPACITY_BITS = 128
 // const PAD_BYTES = 2
@@ -114,19 +127,19 @@ export class Strobe {
     description: string
     // desclen: number
   ): void {
-    operationMap.set(Operation.Ad, Flag.FlagA)
-    operationMap.set(Operation.Key, Flag.FlagA | Flag.FlagC)
-    operationMap.set(Operation.Prf, Flag.FlagI | Flag.FlagA | Flag.FlagC)
-    operationMap.set(Operation.SendClr, Flag.FlagA | Flag.FlagT)
-    operationMap.set(Operation.RecvClr, Flag.FlagI | Flag.FlagA | Flag.FlagT)
-    operationMap.set(Operation.SendEnc, Flag.FlagA | Flag.FlagC | Flag.FlagT)
-    operationMap.set(
-      Operation.RecvEnc,
-      Flag.FlagI | Flag.FlagA | Flag.FlagC | Flag.FlagT
-    )
-    operationMap.set(Operation.SendMac, Flag.FlagC | Flag.FlagT)
-    operationMap.set(Operation.RecvMac, Flag.FlagI | Flag.FlagC | Flag.FlagT)
-    operationMap.set(Operation.Ratchet, Flag.FlagC)
+    // operationMap.set(Operation.Ad, Flag.FlagA)
+    // operationMap.set(Operation.Key, Flag.FlagA | Flag.FlagC)
+    // operationMap.set(Operation.Prf, Flag.FlagI | Flag.FlagA | Flag.FlagC)
+    // operationMap.set(Operation.SendClr, Flag.FlagA | Flag.FlagT)
+    // operationMap.set(Operation.RecvClr, Flag.FlagI | Flag.FlagA | Flag.FlagT)
+    // operationMap.set(Operation.SendEnc, Flag.FlagA | Flag.FlagC | Flag.FlagT)
+    // operationMap.set(
+    //   Operation.RecvEnc,
+    //   Flag.FlagI | Flag.FlagA | Flag.FlagC | Flag.FlagT
+    // )
+    // operationMap.set(Operation.SendMac, Flag.FlagC | Flag.FlagT)
+    // operationMap.set(Operation.RecvMac, Flag.FlagI | Flag.FlagC | Flag.FlagT)
+    // operationMap.set(Operation.Ratchet, Flag.FlagC)
 
     // /// <summary>
     // /// Operation - flag map
@@ -165,7 +178,7 @@ export class Strobe {
     const operateBytes = Buffer.from(description, "ascii")
     this.operate(
       true,
-      operationMap.get(Operation.Ad),
+      operationToFlagMap[Operation.Ad],
       operateBytes,
       0,
       operateBytes.length,
@@ -451,7 +464,7 @@ export class Strobe {
   ) {
     this.operate(
       meta,
-      operationMap.get(Operation.Ad),
+      operationToFlagMap[Operation.Ad],
       additionalData,
       startIndex,
       count,
@@ -496,7 +509,7 @@ export class Strobe {
   ): Uint8Array | null {
     return this.operate(
       meta,
-      operationMap.get(Operation.SendClr),
+      operationToFlagMap[Operation.SendClr],
       cleartext,
       startIndex,
       count,
@@ -541,7 +554,7 @@ export class Strobe {
   ): Uint8Array | null {
     return this.operate(
       meta,
-      operationMap.get(Operation.RecvClr),
+      operationToFlagMap[Operation.RecvClr],
       cleartext,
       startIdex,
       count,
@@ -562,7 +575,7 @@ export class Strobe {
   send_mac(meta: boolean, outputLength: number): Uint8Array | null {
     return this.operate(
       meta,
-      operationMap.get(Operation.SendMac),
+      operationToFlagMap[Operation.SendMac],
       new Uint8Array(0),
       0,
       0,
@@ -607,7 +620,7 @@ export class Strobe {
   ): boolean {
     const r = this.operate(
       meta,
-      operationMap.get(Operation.RecvMac),
+      operationToFlagMap[Operation.RecvMac],
       mac,
       startIndex,
       count,
@@ -631,7 +644,7 @@ export class Strobe {
   ratchet(length: number) {
     this.operate(
       false,
-      operationMap.get(Operation.Ratchet),
+      operationToFlagMap[Operation.Ratchet],
       new Uint8Array(0),
       0,
       0,
@@ -681,7 +694,7 @@ export class Strobe {
   ) {
     return this.operate(
       meta,
-      operationMap.get(Operation.SendEnc),
+      operationToFlagMap[Operation.SendEnc],
       plaintext,
       startIndex,
       count,
