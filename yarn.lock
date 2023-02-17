@@ -153,6 +153,13 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.16.12.tgz#31197bb509049b63c059c4808ac58e66fdff7479"
   integrity sha512-iPYKN78t3op2+erv2frW568j1q0RpqX6JOLZ7oPPaAV1VaF7dDstOrNw37PVOYoTWE11pV4A1XUitpdEFNIsPg==
 
+"@noble/curves@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-0.7.1.tgz#d6068a123a0f16c04b726a73b112a389adcac0c5"
+  integrity sha512-dodwTK3H/0h8BY59J6RxHLC12JPXxmbZUiX5LNX8PjmShcHQXCXaIvXnSXJpFPzAN08SKd8rTrLrzLLNiwU90g==
+  dependencies:
+    "@noble/hashes" "1.2.0"
+
 "@eslint/eslintrc@^1.4.1":
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/@eslint/eslintrc/-/eslintrc-1.4.1.tgz#af58772019a2d271b7e2d4c23ff4ddcba3ccfb3e"
@@ -191,6 +198,11 @@
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.1.3.tgz#360afc77610e0a61f3417e497dcf36862e4f8111"
   integrity sha512-CE0FCR57H2acVI5UOzIGSSIYxZ6v/HOhDR0Ro9VLyhnzLwx0o8W1mmgaqlEUx4049qJDlIBRztv5k+MM8vbO3A==
+
+"@noble/hashes@1.2.0", "@noble/hashes@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.2.0.tgz#a3150eeb09cc7ab207ebf6d7b9ad311a9bdbed12"
+  integrity sha512-FZfhjEDbT5GRswV3C6uvLPHMiVD6lQBmpoX5+eSiPaMTXte/IKqI5dykDxzZB/WBeK/CDuQRBWarPdi3FNY2zQ==
 
 "@noble/secp256k1@1.7.0":
   version "1.7.0"
