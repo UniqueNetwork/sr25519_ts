@@ -3,7 +3,7 @@
 
 import {keccakP} from '@noble/hashes/sha3'
 import {u32} from '@noble/hashes/utils'
-import {stringToUint8Array} from './constants_and_utils'
+import {b} from './utils'
 
 const keccakF1600 = (state: Uint8Array) => {
   keccakP(u32(state), 24)
@@ -32,7 +32,7 @@ export class Strobe128 {
     initial_state[3] = 0
     initial_state[4] = 1
     initial_state[5] = 96
-    initial_state.set(stringToUint8Array('STROBEv1.0.2'), 6)
+    initial_state.set(b`STROBEv1.0.2`, 6)
     keccakF1600(initial_state)
 
     this.state = initial_state
@@ -81,7 +81,7 @@ export class Strobe128 {
       state: this.state.slice(),
       pos: this.pos,
       pos_begin: this.pos_begin,
-      cur_flags: this.cur_flags
+      cur_flags: this.cur_flags,
     }
   }
 

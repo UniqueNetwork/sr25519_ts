@@ -1,6 +1,6 @@
 import {describe, test, expect} from 'vitest'
 import {Strobe128} from './strobe128'
-import {stringToUint8Array} from './constants_and_utils'
+import {b} from './utils'
 
 const stateAfterInit = {
   state: Uint8Array.from([156, 127, 85, 224, 150, 155, 58, 168, 71, 198, 82, 64, 48, 69, 97, 6, 175, 120, 103, 12, 39, 122, 82, 153, 16, 84, 134, 34, 241, 108, 181, 124, 211, 31, 104, 46, 102, 14, 233, 18, 130, 74, 119, 34, 1, 238, 19, 148, 34, 111, 74, 252, 182, 45, 51, 18, 147, 204, 146, 232, 166, 36, 172, 246, 225, 182, 0, 149, 227, 34, 187, 251, 200, 69, 229, 178, 105, 149, 254, 125, 124, 132, 19, 116, 209, 255, 88, 152, 201, 46, 224, 99, 107, 6, 114, 115, 33, 201, 42, 96, 57, 7, 3, 83, 73, 204, 187, 27, 146, 183, 176, 5, 126, 143, 168, 127, 206, 188, 126, 136, 101, 111, 203, 69, 174, 4, 188, 52, 202, 190, 174, 190, 121, 217, 23, 80, 192, 232, 191, 19, 185, 102, 80, 77, 19, 67, 89, 114, 101, 221, 136, 101, 173, 249, 20, 9, 204, 155, 32, 213, 244, 116, 68, 4, 31, 151, 182, 153, 221, 251, 222, 233, 30, 168, 123, 208, 155, 248, 176, 45, 167, 90, 150, 233, 71, 240, 127, 91, 101, 187, 78, 110, 254, 250, 161, 106, 191, 217, 251, 246]),
@@ -34,35 +34,34 @@ const prfTestSequence = Uint8Array.from([7, 228, 92, 206, 128, 120, 206, 226, 89
 
 describe('Strobe128', () => {
   test('conformance', () => {
-    const s1 = new Strobe128(stringToUint8Array('Conformance Test Protocol'))
+    const s1 = new Strobe128(b`Conformance Test Protocol`)
 
     expect(s1.cloneState()).toEqual(stateAfterInit)
 
     // meta-AD(b"msg"); AD(msg)
-    s1.meta_ad(stringToUint8Array('ms'), false)
-    s1.meta_ad(stringToUint8Array('g'), true)
+    s1.meta_ad(b`ms`, false)
+    s1.meta_ad(b`g`, true)
     const msg = new Uint8Array(1024).fill(99)
     s1.ad(msg, false)
 
     expect(s1.cloneState()).toEqual(stateAfterAd)
 
-
     // meta-AD(b"prf"); PRF()
     const prf1 = new Uint8Array(32)
-    s1.meta_ad(stringToUint8Array('prf'), false)
+    s1.meta_ad(b`prf`, false)
     s1.prf(prf1, false)
 
     expect(s1.cloneState()).toEqual(stateAfterPrf)
 
     // meta-AD(b"key"); KEY(prf output)
-    s1.meta_ad(stringToUint8Array('key'), false)
+    s1.meta_ad(b`key`, false)
     s1.key(prf1, false)
 
     expect(s1.cloneState()).toEqual(stateAfterPrfKey)
 
     // meta-AD(b"prf"); PRF()
     const prf1_2 = new Uint8Array(32)
-    s1.meta_ad(stringToUint8Array('prf'), false)
+    s1.meta_ad(b`prf`, false)
     s1.prf(prf1_2, false)
 
     expect(prf1_2).toEqual(prfTestSequence)
