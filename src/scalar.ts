@@ -1,5 +1,3 @@
-import { Keccak } from "./external/keccakf1600"
-
 export const LFACTOR = 0x51da312547e1b
 export const L = BigUint64Array.from([
   0x0002631a5cf5d3edn,
@@ -372,19 +370,27 @@ export class Scalar {
   bytes: Uint8Array
 
   static FromBytes(data: Uint8Array): Scalar {
-    // TODO add size !== 32 error
+    if (data.length !== 32) {
+      throw new Error(`Invalid size of data: should be 32, got ${data.length}`)
+    }
     const s = new Scalar()
     s.bytes = data
+    return s
+  }
+
+  static FromBits(bytes: Uint8Array): Scalar {
+    if (bytes.length !== 32) {
+      throw new Error(`Invalid size of data: should be 32, got ${bytes.length}`)
+    }
+    const s = new Scalar()
+    s.bytes = bytes
+    s.bytes[31] &= 0b0111_1111
     return s
   }
 
   static FromBytesModOrderWide(data: Uint8Array): Uint8Array {
     const tt1 = FromBytesWide(data)
     return Pack(tt1)
-  }
-
-  ToBigInt(): bigint {
-    return Keccak.getUInt64FromBytes(this.bytes)
   }
 
   static ToRadix16(bytes: Uint8Array): number[] {
@@ -421,6 +427,21 @@ export class Scalar {
       bytes[i] += low
       res[i] = bytes[i]
       low = (r << 5) % 256
+    }
+
+    return res
+  }
+
+  MultiplyScalarBytesByCofactor(bytes: Uint8Array): Uint8Array {
+    const res = new Uint8Array(bytes.length)
+    let high = 0
+
+    for (let i = 0; i < bytes.length; i++) {
+      const r = bytes[i] & 0b11100000 // carry bits
+      bytes[i] = bytes[i] << 3 // multiply by 8
+      bytes[i] += high
+      res[i] = bytes[i]
+      high = r >> 5
     }
 
     return res

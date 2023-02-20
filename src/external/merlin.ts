@@ -97,7 +97,7 @@ export class Transcript {
     }
   }
 
-  Prf(expectedOutput: number, more: boolean): Uint8Array | null {
+  Prf(expectedOutput: number, more: boolean): Uint8Array {
     const ed = new Uint8Array(0)
     const result = this.obj.operate(
       false,
@@ -109,7 +109,7 @@ export class Transcript {
       more
     )
     if (result === null) {
-      // throw new ApplicationException($"{result}");
+      throw new Error(`Error in Prf: result is null`)
     }
 
     return result

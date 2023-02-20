@@ -24,6 +24,7 @@
   "devDependencies": {
     "@polkadot/util-crypto": "^10.2.1",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "bn.js": "^5.2.1",
     "eslint": "^8.0.1",
     "eslint-config-standard-with-typescript": "^34.0.0",
     "eslint-plugin-import": "^2.25.2",
@@ -37,6 +38,7 @@
   },
   "dependencies": {
     "@noble/curves": "^0.7.1",
+    "@noble/ed25519": "^1.7.3",
     "@noble/hashes": "^1.2.0"
   }
 }

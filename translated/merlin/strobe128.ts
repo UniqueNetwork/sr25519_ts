@@ -1,12 +1,10 @@
 // translated from the original Rust version of Strobe128
 // https://github.com/dalek-cryptography/merlin/blob/53535f32e6d6de421372d67f56176af0c0f55fd7/src/strobe.rs
-
-import {keccakP} from '@noble/hashes/sha3'
-import {u32} from '@noble/hashes/utils'
 import {b} from './utils'
 
+import {keccakP} from '@noble/hashes/sha3'
 const keccakF1600 = (state: Uint8Array) => {
-  keccakP(u32(state), 24)
+  keccakP(new Uint32Array(state.buffer, state.byteOffset, Math.floor(state.byteLength / 4)), 24)
 }
 
 const STROBE_R = 166

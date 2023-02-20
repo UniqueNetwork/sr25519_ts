@@ -2,7 +2,12 @@ import { U64size, _m as m } from "./scalar"
 
 const LOW_51_BIT_MASK = (1n << 51n) - 1n
 
-function load8(input: Uint8Array): bigint {
+/**
+  * Converts Uint8Array[8] to a BigInt in little endian
+  * @param input Uint8Array[8]
+  * @returns {bigint
+ */
+function uint8ArrayToBigIntLE(input: Uint8Array): bigint {
   return (
     BigInt(input[0]) |
     (BigInt(input[1]) << 8n) |
@@ -83,30 +88,22 @@ export class FieldElement {
   }
 
   static FromBytes(bytes: Uint8Array): FieldElement {
-    const low51BitMask: bigint = (1n << 51n) - 1n
-
     const res = this.Zero()
     // load bits [  0, 64), no shift
-    res.data[0] = load8(bytes.slice(0, 8)) & low51BitMask
+    res.data[0] = uint8ArrayToBigIntLE(bytes.slice(0, 8)) & LOW_51_BIT_MASK
     // // load bits [ 48,112), shift to [ 51,112)
-    res.data[1] = (load8(bytes.slice(6, 6 + 8)) >> 3n) & low51BitMask
+    res.data[1] = (uint8ArrayToBigIntLE(bytes.slice(6, 6 + 8)) >> 3n) & LOW_51_BIT_MASK
     // // load bits [ 96,160), shift to [102,160)
-    res.data[2] = (load8(bytes.slice(12, 12 + 8)) >> 6n) & low51BitMask
+    res.data[2] = (uint8ArrayToBigIntLE(bytes.slice(12, 12 + 8)) >> 6n) & LOW_51_BIT_MASK
     // // load bits [152,216), shift to [153,216)
-    res.data[3] = (load8(bytes.slice(19, 19 + 8)) >> 1n) & low51BitMask
+    res.data[3] = (uint8ArrayToBigIntLE(bytes.slice(19, 19 + 8)) >> 1n) & LOW_51_BIT_MASK
     // // load bits [192,256), shift to [204,112)
-    res.data[4] = (load8(bytes.slice(24, 24 + 8)) >> 12n) & low51BitMask
+    res.data[4] = (uint8ArrayToBigIntLE(bytes.slice(24, 24 + 8)) >> 12n) & LOW_51_BIT_MASK
     return res
   }
 
   Clone(): FieldElement {
-    return new FieldElement([
-      this.data[0],
-      this.data[1],
-      this.data[2],
-      this.data[3],
-      this.data[4],
-    ])
+    return new FieldElement(this.data.slice())
   }
 
   CtEq(a: FieldElement) {

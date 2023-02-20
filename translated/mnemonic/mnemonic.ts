@@ -1,6 +1,6 @@
 import {sha256} from '@noble/hashes/sha256'
 import {sha512} from '@noble/hashes/sha512'
-import {pbkdf2Async} from '@noble/hashes/pbkdf2'
+import {pbkdf2, pbkdf2Async} from '@noble/hashes/pbkdf2'
 
 const INVALID_MNEMONIC = 'Invalid mnemonic'
 const INVALID_ENTROPY = 'Invalid entropy'
@@ -101,17 +101,28 @@ export const validateMnemonic = (mnemonic: string): { result: true, error: null 
     error: null,
   }
 }
-
-
-export const mnemonicToMiniSecret = async (mnemonic: string, password = ''): Promise<Uint8Array> => {
+const mnemonicToEntropyAndSalt = (mnemonic: string, password = ''): { entropy: Uint8Array, salt: Uint8Array } => {
   const validationResult = validateMnemonic(mnemonic)
   if (!validationResult.result) {
-    throw new Error(`Invalid bip39 mnemonic specified: ${validationResult.error.toString()}`);
+    throw new Error(`Invalid bip39 mnemonic specified: ${validationResult.error.toString()}`)
   }
-  const entropy: Uint8Array = mnemonicToEntropy(mnemonic);
-  const salt: Uint8Array = new TextEncoder().encode(`mnemonic${password}`);
+  const entropy: Uint8Array = mnemonicToEntropy(mnemonic)
+  const salt: Uint8Array = new TextEncoder().encode(`mnemonic${password}`)
 
+  return {entropy, salt}
+}
+
+export const mnemonic = async (mnemonic: string, password = ''): Promise<Uint8Array> => {
+  const {entropy, salt} = mnemonicToEntropyAndSalt(mnemonic, password)
   // return the first 32 bytes as the seed
   const result = await pbkdf2Async(sha512, entropy, salt, {c: 2048, dkLen: 64})
+  return result.slice(0, 32)
+}
+
+export const mnemonicToMiniSecretSync = (mnemonic: string, password = ''): Uint8Array => {
+  const {entropy, salt} = mnemonicToEntropyAndSalt(mnemonic, password)
+
+  // return the first 32 bytes as the seed
+  const result = pbkdf2(sha512, entropy, salt, {c: 2048, dkLen: 64})
   return result.slice(0, 32)
 }

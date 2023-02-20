@@ -9,6 +9,8 @@ import {
 } from "./scalar"
 import { RistrettoBasepointTable, RistrettoPoint } from "./ristretto"
 import { EdwardsPoint } from "./edwardsPoint"
+import {sha512} from '@noble/hashes/sha512'
+import {divideScalarBytesByCofactor} from '../translated/mnemonic/utils'
 
 interface ISigningContext {
   BytesClone: (data: Uint8Array) => Transcript
@@ -33,15 +35,6 @@ export class SecretKey {
   static FromBytes(bytes: Uint8Array): SecretKey {
     if (bytes.length !== 64) throw new Error(`Invalid secret key length`)
 
-    const r: SecretKey = new SecretKey()
-    r.key = Scalar.FromBytes(bytes.slice(0, 32))
-    r.nonce = bytes.slice(32, 64)
-    return r
-  }
-
-  static FromBytes095(bytes: Uint8Array): SecretKey {
-    if (bytes.length !== 64) throw new Error(`Invalid secret key length`)
-
     const secretKey: SecretKey = new SecretKey()
 
     secretKey.key = Scalar.FromBytes(
@@ -51,6 +44,51 @@ export class SecretKey {
     secretKey.nonce = bytes.slice(32, 64)
 
     return secretKey
+  }
+
+  static FromScalarAndNonce(scalar: Scalar, nonce: Uint8Array): SecretKey {
+    const secretKey: SecretKey = new SecretKey()
+
+    secretKey.key = scalar
+    secretKey.nonce = nonce
+
+    return secretKey
+  }
+
+  static FromMiniSecret(miniSecret: Uint8Array): SecretKey {
+    const r = sha512(miniSecret)
+
+    const key = r.slice(0, 32)
+    key[0] &= 248 // 1111_1000 0xf8
+    key[31] &= 63 // 0011_1111 0x3f
+    key[31] |= 64 // 0100_0000 0x40
+    const scalar = Scalar.FromBits(Scalar.DivideScalarBytesByCofactor(key))
+
+    const nonce = r.slice(32, 64)
+
+    const secretKey: SecretKey = new SecretKey()
+
+    secretKey.key = scalar
+    secretKey.nonce = nonce
+
+    return secretKey
+  }
+
+  ToPublicKey(): PublicKey {
+    const publicKey = new PublicKey()
+
+    const point = new RistrettoBasepointTable().Mul(this.key).Compress()
+
+    publicKey.key = point.ToBytes()
+
+    return publicKey
+  }
+
+  ToEd25519Bytes(): Uint8Array {
+    const bytes = new Uint8Array(64)
+    bytes.set(this.key.bytes.slice())
+    bytes.set(this.nonce.slice(), 32)
+    return bytes
   }
 }
 

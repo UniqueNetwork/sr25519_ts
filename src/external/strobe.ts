@@ -1,7 +1,10 @@
 // import * as sha3 from '@noble/hashes/sha3'
 // import * as sha3Addons from '@noble/hashes/sha3-addons'
 // import * as keccak_f1800 from './keccak'
-import * as hashFunc from "./keccakf1600"
+import {keccakP} from '@noble/hashes/sha3'
+const keccakF1600 = (state: Uint8Array) => {
+  keccakP(new Uint32Array(state.buffer, state.byteOffset, Math.floor(state.byteLength / 4)), 24)
+}
 
 /// <summary>
 /// Srobe operation
@@ -210,7 +213,7 @@ export class Strobe {
       this.state[this.strobeR + 1] ^= 128
     }
 
-    this.state = hashFunc.Keccak.KeccakF1600(this.state, 24)
+    keccakF1600(this.state)
 
     // Keccak.KeccakF1600(ref state, 24);
     this.posBegin = 0
@@ -701,59 +704,5 @@ export class Strobe {
       0,
       false
     )
-  }
-
-  /// <summary>
-  /// Encrypt data and authenticate additional data
-  /// </summary>
-  /// <param name="plaintext">
-  /// Data to be encrypted and authenticated
-  /// </param>
-  /// <param name="ad">
-  /// Additional data to be authenticated
-  /// </param>
-  send_aead(plaintext: Uint8Array, ad: Uint8Array): Uint8Array | null {
-    return this.send_aead_f(plaintext, 0, plaintext.length, ad, 0, ad.length)
-  }
-
-  /// <summary>
-  /// Encrypt data and authenticate additional data
-  /// </summary>
-  /// <param name="plaintext">
-  /// Data to be encrypted and authenticated
-  /// </param>
-  /// <param name="plaintextStartIndex">
-  /// Start index for reading from plaintext buffer
-  /// </param>
-  /// <param name="plaintextCount">
-  /// Number of plaintext bytes to read
-  /// </param>
-  /// <param name="ad">
-  /// Additional data to be authenticated
-  /// </param>
-  /// <param name="adStartIndex">
-  /// Start index for reading from AD buffer
-  /// </param>
-  /// <param name="adCOunt">
-  /// Number of AD bytes to read
-  /// </param>
-  send_aead_f(
-    plaintext: Uint8Array,
-    plaintextStartIndex: number,
-    plaintextCount: number,
-    ad: Uint8Array,
-    adStartIndex: number,
-    adCOunt: number
-  ): Uint8Array | null {
-    const ciphertext = this.send_enc_unauthenticated_f(
-      false,
-      plaintext,
-      plaintextStartIndex,
-      plaintextCount
-    )
-    this.ad_f(false, ad, adStartIndex, adCOunt)
-    // TODO
-    // ciphertext = ciphertext.Concat(this.send_mac(false, this.MacLen)).ToArray();
-    return ciphertext
   }
 }

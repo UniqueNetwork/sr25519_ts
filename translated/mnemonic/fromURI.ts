@@ -1,10 +1,5 @@
 // default substrate dev phrase
-import {mnemonicToMiniSecret} from "./mnemonicToMiniSecret";
-
-export const DEV_PHRASE = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk';
-
-// seed from the above phrase
-export const DEV_SEED = '0xfac7959dbfe72f052e5a0c3c8d6530f202b02fd8f9f5ca3580ec8deb7797479e';
+import {mnemonic} from "./mnemonic";
 
 const RE_CAPTURE = /^(\w+( \w+)*)((\/\/?[^/]+)*)(\/\/\/(.*))?$/;
 
@@ -132,7 +127,7 @@ const createFromUri = async (_suri: string) => {
     const parts = phrase.split(' ')
 
     if ([12, 15, 18, 21, 24].includes(parts.length)) {
-      seed = await mnemonicToMiniSecret(phrase, password);
+      seed = await mnemonic(phrase, password);
     } else {
       throw new Error('specified phrase is not a valid mnemonic and is invalid as a raw seed at > 32 bytes');
     }
