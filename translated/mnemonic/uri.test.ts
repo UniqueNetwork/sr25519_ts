@@ -1,5 +1,8 @@
 import {describe, test, expect} from 'vitest'
-import {parseUri} from './uri'
+import {getChainCode, parseUri, deriveHard, deriveSoft, parseUriAndDerive} from './uri'
+import {toHex} from '../merlin/utils'
+import {Keypair} from '../../src/keypair'
+import {mnemonicToMiniSecret} from './mnemonic'
 
 const PHRASE = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk'
 
@@ -136,6 +139,26 @@ const sr25519TestData = [
   }
 ]
 
+
+describe('derivation', async () => {
+  test('hard derivation', () => {
+    const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecret(PHRASE))
+
+    const derivedKeypair = deriveHard(keypair, getChainCode('Alice'))
+
+    expect(derivedKeypair.publicKey.key).toEqual(Uint8Array.from([212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125]))
+  })
+
+  test('soft derivation', () => {
+    const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecret(PHRASE))
+
+    const derivedKeypair = deriveSoft(keypair, getChainCode('foo'))
+
+    expect(derivedKeypair.publicKey.key).toEqual(Uint8Array.from([64, 185, 103, 93, 249, 14, 250, 96, 105, 255, 98, 59, 15, 223, 207, 112, 108, 212, 124, 167, 69, 42, 80, 86, 199, 173, 88, 25, 77, 35, 68, 10]))
+    expect(derivedKeypair.secretKey.key.bytes).toEqual(Uint8Array.from([81, 163, 64, 84, 147, 172, 216, 60, 75, 176, 212, 16, 43, 255, 149, 194, 180, 247, 53, 31, 207, 161, 207, 81, 26, 128, 110, 153, 201, 220, 120, 14]))
+  })
+})
+
 describe('uri', () => {
   test('parse uri - single', () => {
     const result = parseUri(EXTREMELY_COMPLEX_URI)
@@ -151,6 +174,13 @@ describe('uri', () => {
   test('parse uri - multiple', () => {
     for (const {uri, uriParts} of sr25519TestData) {
       expect(parseUri(uri)).toEqual(uriParts)
+    }
+  })
+
+  test('parse uri and test derivations', () => {
+    for (const {uri, pk} of sr25519TestData) {
+      const keypair = parseUriAndDerive(uri)
+      expect(toHex(keypair.publicKey.key)).toEqual(pk)
     }
   })
 })

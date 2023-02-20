@@ -1,5 +1,11 @@
 import {bigIntToUint8Array, compactAddLength, hexStringToUint8Array, isHex} from './bytes'
 import {blake2b} from '@noble/hashes/blake2b'
+import {mnemonicToMiniSecretAsync, mnemonicToMiniSecret} from './mnemonic'
+import {Keypair} from '../../src/keypair'
+import {Transcript} from '../merlin/transcript'
+import {SecretKey} from '../../src/signingContext'
+import {b} from '../merlin/utils'
+import {Scalar, ScalarAdd, ScalarBigintToBytesForm, ScalarBytesToBigintForm} from '../../src/scalar'
 
 export const DEFAULT_MNEMONIC = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk';
 
@@ -52,4 +58,76 @@ export const getChainCode = (str: string): Uint8Array => {
   chainCode.set(u8a.length > 32 ? blake2b(u8a, {dkLen: 32}) : u8a, 0)
 
   return chainCode
+}
+
+export const deriveHard = (keypair: Keypair, chainCode: Uint8Array): Keypair => {
+  const transcript = new Transcript(b`SchnorrRistrettoHDKD`)
+
+  transcript.append_message(b`sign-bytes`, new Uint8Array())
+  transcript.append_message(b`chain-code`, chainCode)
+  transcript.append_message(b`secret-key`, keypair.secretKey.key.bytes.slice())
+
+  const msk = new Uint8Array(32)
+  transcript.challenge_bytes(b`HDKD-hard`, msk)
+
+  const chaincode_2 = new Uint8Array(32)
+  transcript.challenge_bytes(b`HDKD-chaincode`, chaincode_2)
+
+  return Keypair.FromMiniSecret(msk)
+}
+
+export const deriveSoft = (keypair: Keypair, chainCode: Uint8Array): Keypair => {
+  const transcript = new Transcript(b`SchnorrRistrettoHDKD`)
+  transcript.append_message(b`sign-bytes`, new Uint8Array())
+
+  transcript.append_message(b`chain-code`, chainCode)
+  transcript.append_message(b`public-key`, keypair.publicKey.key.slice())
+
+  const buf = new Uint8Array(64)
+  transcript.challenge_bytes(b`HDKD-scalar`, buf)
+  const scalar = Scalar.FromBytesModOrderWide(buf)
+
+  const chaincode_2 = new Uint8Array(32)
+  transcript.challenge_bytes(b`HDKD-chaincode`, chaincode_2)
+
+  const nonce = new Uint8Array(32)
+  transcript.witness_bytes(b`HDKD-nonce`, nonce, [keypair.secretKey.nonce.slice(), keypair.secretKey.ToBytes().slice()])
+
+  const derivedSecretKeyKey = Scalar.FromBytes(ScalarBigintToBytesForm(
+    ScalarAdd(
+      ScalarBytesToBigintForm(keypair.secretKey.key.bytes.slice()),
+      ScalarBytesToBigintForm(scalar)
+    )
+  ))
+  const derivedSecretKey = SecretKey.FromScalarAndNonce(derivedSecretKeyKey, nonce)
+  const publicKey = derivedSecretKey.ToPublicKey()
+
+  return new Keypair(publicKey, derivedSecretKey)
+}
+
+
+const processDerivations = (keypair: Keypair, derivations: Derivation[]): Keypair => {
+  for (const {hard, cc} of derivations) {
+    keypair = hard ? deriveHard(keypair, cc) : deriveSoft(keypair, cc)
+  }
+
+  return keypair
+}
+
+export const parseUriAndDerive = (uri: string): Keypair => {
+  const {mnemonic, password, derivations} = parseUri(uri)
+
+  return processDerivations(
+    Keypair.FromMiniSecret(mnemonicToMiniSecret(mnemonic, password)),
+    derivations,
+  )
+}
+
+export const parseUriAndDeriveAsync = async (uri: string): Promise<Keypair> => {
+  const {mnemonic, password, derivations} = parseUri(uri)
+
+  return processDerivations(
+    Keypair.FromMiniSecret(await mnemonicToMiniSecretAsync(mnemonic, password)),
+    derivations,
+  )
 }

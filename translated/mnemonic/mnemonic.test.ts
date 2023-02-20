@@ -1,37 +1,7 @@
-import {describe, test, expect, beforeAll} from 'vitest'
-import {deriveHard, deriveSoft, mnemonicToMiniSecret, mnemonicToMiniSecretSync} from './mnemonic'
+import {describe, test, expect} from 'vitest'
+import {mnemonicToMiniSecretAsync, mnemonicToMiniSecret} from './mnemonic'
 import {Keypair} from '../../src/keypair'
-
-
-import * as utilCrypto from '@polkadot/util-crypto'
-import {b, hex, toHex} from '../merlin/utils'
-import {getChainCode} from './uri'
 import {Transcript} from '../merlin/transcript'
-
-const TEST_MNEMONIC = 'already peasant brick narrow jungle glimpse arena enhance regular gift raven cheese'
-
-describe('mnemonic', async () => {
-  beforeAll(async () => {
-    await utilCrypto.cryptoWaitReady()
-  })
-  test('mnemonicToMiniSecret - async', async () => {
-    const miniSecret = (await mnemonicToMiniSecret(TEST_MNEMONIC))
-    expect(miniSecret).toEqual(utilCrypto.mnemonicToMiniSecret(TEST_MNEMONIC))
-  })
-  test('mnemonicToMiniSecret - sync', () => {
-    const miniSecret = mnemonicToMiniSecretSync(TEST_MNEMONIC)
-    expect(miniSecret).toEqual(utilCrypto.mnemonicToMiniSecret(TEST_MNEMONIC))
-  })
-})
-
-const miniSecret = Uint8Array.from([105, 235, 55, 249, 142, 185, 103, 97, 97, 104, 76, 250, 145, 84, 75, 168, 144, 128, 238, 87, 141, 15, 138, 11, 235, 152, 24, 104, 218, 160, 36, 213])
-
-const bytesAfterExpansionEd25519 = Uint8Array.from([30, 120, 176, 79, 67, 254, 41, 88, 121, 198, 7, 156, 78, 186, 158, 13, 126, 139, 108, 58, 10, 172, 69, 14, 70, 220, 122, 164, 97, 221, 119, 10])
-const nonceAfterExpansionEd25519 = Uint8Array.from([29, 191, 186, 31, 159, 142, 55, 180, 204, 87, 138, 111, 225, 163, 66, 24, 106, 80, 11, 149, 214, 75, 157, 103, 190, 40, 72, 79, 0, 63, 163, 0])
-
-// CompressedRistrettoPoint
-const publicKey = Uint8Array.from([216, 0, 178, 146, 92, 17, 182, 173, 172, 73, 97, 148, 231, 190, 3, 128, 230, 141, 248, 170, 100, 157, 253, 26, 114, 229, 182, 227, 99, 82, 162, 8])
-
 
 const PHRASE = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk'
 
@@ -92,48 +62,35 @@ const printTranscript = (transcript: Transcript) => {
   console.log('cur_flags', strobe.cur_flags)
 }
 
-describe('keys', async () => {
-  test('should work', async () => {
-    const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecretSync(PHRASE))
-    expect(keypair.publicKey.key).toEqual(FOR_PHRASE.publicKey)
-    expect(keypair.secretKey.getInConcatenatedForm()).toEqual(FOR_PHRASE.secretKeyWithNonce)
-    expect(keypair.secretKey.key.bytes).toEqual(FOR_PHRASE.secretKey)
 
-    expect(keypair.ToBytes()).toEqual(FOR_PHRASE.full)
-  })
-
-  test('should work with sr25519', async () => {
-    const miniSecret = await mnemonicToMiniSecret(PHRASE)
+describe('mini secret', async () => {
+  test('on phrase', async () => {
+    const miniSecret = mnemonicToMiniSecret(PHRASE)
     expect(miniSecret).toEqual(miniSecretForPhrase)
   })
 
-  test('should work with sr25519 - with password', async () => {
-    const miniSecret = await mnemonicToMiniSecret(PHRASE, 'password')
+  test('on phrase - async', async () => {
+    const miniSecret = await mnemonicToMiniSecretAsync(PHRASE)
+    expect(miniSecret).toEqual(miniSecretForPhrase)
+  })
+
+  test('on phrase with password', () => {
+    const miniSecret = mnemonicToMiniSecret(PHRASE, 'password')
     expect(miniSecret).toEqual(miniSecretForPhraseWithPassword)
   })
 
-  test('hard derivation', async () => {
-    const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecretSync(PHRASE))
-
-    const derivedKeypair = deriveHard(
-      keypair.secretKey.key.bytes.slice(),
-      getChainCode('Alice')
-    )
-
-    expect(derivedKeypair.publicKey.key).toEqual(Uint8Array.from([212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125]))
-  })
-
-  test('soft derivation', async () => {
-    const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecretSync(PHRASE))
-
-    const derivedKeypair = deriveSoft(
-      keypair,
-      getChainCode('foo')
-    )
-
-    expect(derivedKeypair.publicKey.key).toEqual(Uint8Array.from([64, 185, 103, 93, 249, 14, 250, 96, 105, 255, 98, 59, 15, 223, 207, 112, 108, 212, 124, 167, 69, 42, 80, 86, 199, 173, 88, 25, 77, 35, 68, 10]))
-    expect(derivedKeypair.secretKey.key.bytes).toEqual(Uint8Array.from([81, 163, 64, 84, 147, 172, 216, 60, 75, 176, 212, 16, 43, 255, 149, 194, 180, 247, 53, 31, 207, 161, 207, 81, 26, 128, 110, 153, 201, 220, 120, 14]))
+  test('on phrase with password - async', async () => {
+    const miniSecret = await mnemonicToMiniSecretAsync(PHRASE, 'password')
+    expect(miniSecret).toEqual(miniSecretForPhraseWithPassword)
   })
 })
 
+describe('keypair', () => {
+  const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecret(PHRASE))
 
+  expect(keypair.publicKey.key).toEqual(FOR_PHRASE.publicKey)
+  expect(keypair.secretKey.getInConcatenatedForm()).toEqual(FOR_PHRASE.secretKeyWithNonce)
+  expect(keypair.secretKey.key.bytes).toEqual(FOR_PHRASE.secretKey)
+
+  expect(keypair.ToBytes()).toEqual(FOR_PHRASE.full)
+})
