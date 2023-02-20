@@ -1,5 +1,5 @@
 import { Strobe, Operation, operationToFlagMap } from "./strobe"
-import { type RandomGenerator } from "../signingContext"
+import { RandomGenerator } from "../signingContext"
 
 const textEncoder = new TextEncoder()
 
@@ -167,7 +167,28 @@ export class Transcript {
     return br.Finalize(rng)
   }
 
+  WitnessBytesHdkd(
+    label: Uint8Array, dest_len: number, nonce_seeds: Uint8Array[]
+  ): Uint8Array {
+    const dest = new Uint8Array(dest_len)
+
+    let br = this.BuildRng()
+    for (let ns of nonce_seeds) {
+      br = br.RekeyWithWitnessBytes(label, ns)
+    }
+    let r = br.Finalize(new RandomGenerator())
+    r.FillBytes(dest)
+
+    return dest
+  }
+
   BuildRng(): TranscriptRngBuilder {
     return new TranscriptRngBuilder(this.Clone())
+  }
+
+  FillBytes(dest: Uint8Array) {
+    const data_len = getBytesU32(dest.length)
+    this.MetaAd(data_len, false)
+    this.Prf(dest.length, false)
   }
 }

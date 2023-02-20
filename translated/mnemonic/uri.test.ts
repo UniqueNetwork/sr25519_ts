@@ -1,5 +1,5 @@
 import {describe, test, expect} from 'vitest'
-import {getChainCode, parseUri, deriveHard, deriveSoft, parseUriAndDerive} from './uri'
+import {getChainCode, parseUri, deriveHard, deriveSoft, parseUriAndDerive, parseUriAndDeriveAsync} from './uri'
 import {toHex} from '../merlin/utils'
 import {Keypair} from '../../src/keypair'
 import {mnemonicToMiniSecret} from './mnemonic'
@@ -180,6 +180,13 @@ describe('uri', () => {
   test('parse uri and test derivations', () => {
     for (const {uri, pk} of sr25519TestData) {
       const keypair = parseUriAndDerive(uri)
+      expect(toHex(keypair.publicKey.key)).toEqual(pk)
+    }
+  })
+
+  test('parse uri and test derivations - async', async () => {
+    for (const {uri, pk} of sr25519TestData) {
+      const keypair = await parseUriAndDeriveAsync(uri)
       expect(toHex(keypair.publicKey.key)).toEqual(pk)
     }
   })
