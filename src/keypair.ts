@@ -18,9 +18,8 @@ export class Keypair {
 
   ToBytes(): Uint8Array {
     const bytes = new Uint8Array(96)
-    bytes.set(this.publicKey.key.slice())
-    bytes.set(this.secretKey.key.bytes.slice(), 32)
-    bytes.set(this.secretKey.nonce.slice(), 64)
+    bytes.set(this.secretKey.getInConcatenatedForm())
+    bytes.set(this.publicKey.key, 64)
     return bytes
   }
 

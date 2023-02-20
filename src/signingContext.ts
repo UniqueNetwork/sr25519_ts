@@ -10,7 +10,6 @@ import {
 import { RistrettoBasepointTable, RistrettoPoint } from "./ristretto"
 import { EdwardsPoint } from "./edwardsPoint"
 import {sha512} from '@noble/hashes/sha512'
-import {divideScalarBytesByCofactor} from '../translated/mnemonic/utils'
 
 interface ISigningContext {
   BytesClone: (data: Uint8Array) => Transcript
@@ -32,6 +31,10 @@ export class SecretKey {
   nonce: Uint8Array
   key: Scalar
 
+  getInConcatenatedForm() {
+    return Uint8Array.from([...Scalar.MultiplyScalarBytesByCofactor(this.key.bytes.slice()), ...this.nonce])
+  }
+
   static FromBytes(bytes: Uint8Array): SecretKey {
     if (bytes.length !== 64) throw new Error(`Invalid secret key length`)
 
@@ -44,6 +47,10 @@ export class SecretKey {
     secretKey.nonce = bytes.slice(32, 64)
 
     return secretKey
+  }
+
+  ToBytes(): Uint8Array {
+    return new Uint8Array([...this.key.bytes, ...this.nonce])
   }
 
   static FromScalarAndNonce(scalar: Scalar, nonce: Uint8Array): SecretKey {

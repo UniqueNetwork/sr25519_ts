@@ -1,6 +1,7 @@
 import {Strobe128} from './strobe128'
 import {MERLIN_PROTOCOL_LABEL} from './constants'
 import {b} from './utils'
+import {randomBytes} from '@noble/hashes/utils'
 
 const encode_u64 = (x: bigint): Uint8Array => {
   const buf = new Uint8Array(8)
@@ -69,6 +70,26 @@ export class Transcript {
     this.strobe.meta_ad(data_len, true)
     this.strobe.prf(dest, false)
   }
+
+  witness_bytes_rng(label: Uint8Array, dest: Uint8Array, nonce_seeds: Uint8Array[]) {
+    let br = this.build_rng()
+    for (let ns of nonce_seeds) {
+      br = br.rekey_with_witness_bytes(label, ns)
+    }
+    let r = br.finalize()
+    r.fill_bytes(dest)
+  }
+
+  witness_bytes(label: Uint8Array, dest: Uint8Array, nonce_seeds: Uint8Array[]) {
+    return this.witness_bytes_rng(label, dest, nonce_seeds)
+  }
+
+  witness_scalar(label: Uint8Array, nonce_seeds: Uint8Array[]) {
+    let scalar_bytes = new Uint8Array(64)
+    this.witness_bytes(label, scalar_bytes, nonce_seeds)
+    //todo:
+    return
+  }
 }
 
 export class TranscriptRngBuilder {
@@ -97,14 +118,9 @@ export class TranscriptRngBuilder {
     return this
   }
 
-  finalize(generateRandom?: () => Uint8Array) {
-    let bytes = new Uint8Array(32)
-
-    if (generateRandom) {
-      bytes = generateRandom()
-    } else {
-      crypto.getRandomValues(bytes)
-    }
+  finalize(generateRandomBytes32?: () => Uint8Array) {
+    // let bytes = new Uint8Array(32)
+    let bytes = generateRandomBytes32 ? generateRandomBytes32() : randomBytes(32)
 
     this.strobe.meta_ad(b`rng`, false)
     this.strobe.key(bytes, false)

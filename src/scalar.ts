@@ -367,7 +367,7 @@ function topHalf(x: number) {
 }
 
 export class Scalar {
-  bytes: Uint8Array
+  public bytes: Uint8Array
 
   static FromBytes(data: Uint8Array): Scalar {
     if (data.length !== 32) {
@@ -432,7 +432,7 @@ export class Scalar {
     return res
   }
 
-  MultiplyScalarBytesByCofactor(bytes: Uint8Array): Uint8Array {
+  static MultiplyScalarBytesByCofactor(bytes: Uint8Array): Uint8Array {
     const res = new Uint8Array(bytes.length)
     let high = 0
 
