@@ -27,6 +27,8 @@ function isUint8ArrayEqual(a: Uint8Array, b: Uint8Array): boolean {
   return true
 }
 
+const textEncoder = new TextEncoder()
+
 export class SecretKey {
   nonce: Uint8Array
   key: Scalar
@@ -161,7 +163,7 @@ export class SigningTranscript {
   SetProtocolName(label: Uint8Array) {
     this.CommitBytesB(
       this.context.GetTranscript(),
-      Buffer.from("proto-name", "ascii"),
+      textEncoder.encode("proto-name"),
       label
     )
   }
@@ -204,7 +206,7 @@ export class SigningTranscript {
   }
 
   CommitBytesS(ts: Transcript, label: string, bytes: Uint8Array) {
-    ts.AppendMessage(Buffer.from(label, "ascii"), bytes)
+    ts.AppendMessage(textEncoder.encode(label), bytes)
   }
 
   CommitPointF(
@@ -255,12 +257,12 @@ export class SigningContext085 implements ISigningContext {
   }
 
   Bytes(data: Uint8Array) {
-    this.ts.AppendMessage(Buffer.from("sign-bytes", "ascii"), data)
+    this.ts.AppendMessage(textEncoder.encode("sign-bytes"), data)
   }
 
   BytesClone(data: Uint8Array): Transcript {
     const clone = this.ts.Clone()
-    clone.AppendMessage(Buffer.from("sign-bytes", "ascii"), data)
+    clone.AppendMessage(textEncoder.encode("sign-bytes"), data)
     return clone
   }
 
@@ -276,11 +278,11 @@ export class SigningContext085 implements ISigningContext {
     const sig = new Signature()
     sig.FromBytes(signature)
 
-    st.SetProtocolName(Buffer.from("Schnorr-sig", "ascii"))
-    st.CommitPointBytes(Buffer.from("sign:pk", "ascii"), publicKey.key)
-    st.CommitPointBytes(Buffer.from("sign:R", "ascii"), sig.R)
+    st.SetProtocolName(textEncoder.encode("Schnorr-sig"))
+    st.CommitPointBytes(textEncoder.encode("sign:pk"), publicKey.key)
+    st.CommitPointBytes(textEncoder.encode("sign:R"), sig.R)
 
-    const k = st.ChallengeScalar(Buffer.from("sign:c", "ascii")) // context, message, A/public_key, R=rG
+    const k = st.ChallengeScalar(textEncoder.encode("sign:c")) // context, message, A/public_key, R=rG
 
     const A = EdwardsPoint.Decompress(publicKey.key)
     const negA = A.Negate()
@@ -303,11 +305,11 @@ export class SigningContext085 implements ISigningContext {
     publicKey: PublicKey,
     rng: RandomGenerator
   ): Signature {
-    st.SetProtocolName(Buffer.from("Schnorr-sig", "ascii"))
-    st.CommitPointBytes(Buffer.from("sign:pk", "ascii"), publicKey.key)
+    st.SetProtocolName(textEncoder.encode("Schnorr-sig"))
+    st.CommitPointBytes(textEncoder.encode("sign:pk"), publicKey.key)
 
     const r = st.WitnessScalarLabel(
-      Buffer.from("signing", "ascii"),
+      textEncoder.encode("signing"),
       secretKey.nonce,
       rng
     )
@@ -317,9 +319,9 @@ export class SigningContext085 implements ISigningContext {
     const tbl = new RistrettoBasepointTable()
     const R = tbl.Mul(sc).Compress()
 
-    st.CommitPoint(Buffer.from("sign:R", "ascii"), R)
+    st.CommitPoint(textEncoder.encode("sign:R"), R)
 
-    const k = st.ChallengeScalar(Buffer.from("sign:c", "ascii")) // context, message, A/public_key, R=rG
+    const k = st.ChallengeScalar(textEncoder.encode("sign:c")) // context, message, A/public_key, R=rG
     const scalar = ScalarAdd(
       ScalarMul(
         ScalarBytesToBigintForm(k),

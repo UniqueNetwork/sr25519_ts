@@ -112,6 +112,8 @@ export const operationToFlagMap: Record<Operation, Flag> = {
 // const RATE_INNER = 25 * 32 - CAPACITY_BITS / 8
 // const RATE = RATE_INNER - PAD_BYTES
 
+const textEncoder = new TextEncoder()
+
 export class Strobe {
   public state: Uint8Array
   public initialized: boolean
@@ -178,7 +180,7 @@ export class Strobe {
 
     this.strobe_duplex(first, 0, first.byteLength, false, false, true)
     this.initialized = true
-    const operateBytes = Buffer.from(description, "ascii")
+    const operateBytes = textEncoder.encode(description)
     this.operate(
       true,
       operationToFlagMap[Operation.Ad],

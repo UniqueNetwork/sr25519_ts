@@ -1,6 +1,8 @@
 import { Strobe, Operation, operationToFlagMap } from "./strobe"
 import { type RandomGenerator } from "../signingContext"
 
+const textEncoder = new TextEncoder()
+
 export function getBytesU32(num: number): Uint8Array {
   const r = new Uint8Array(4)
   r[0] = num % 256
@@ -33,7 +35,7 @@ class TranscriptRngBuilder {
     const bytes = rng.GetRandomArrayU8_32()
 
     const newStrobe = this.strobe.Clone()
-    newStrobe.MetaAd(Buffer.from("rng", "ascii"), false)
+    newStrobe.MetaAd(textEncoder.encode("rng"), false)
     newStrobe.Key(bytes, false)
 
     return newStrobe
@@ -50,8 +52,8 @@ export class Transcript {
     this.obj.strobe_init(this.MERLIN_PROTOCOL_LABEL)
 
     this.AppendMessage(
-      Buffer.from("dom-sep", "ascii"),
-      Buffer.from(label, "ascii")
+      textEncoder.encode("dom-sep"),
+      textEncoder.encode(label)
     )
   }
 
