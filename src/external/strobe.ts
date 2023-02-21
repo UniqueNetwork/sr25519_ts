@@ -129,7 +129,7 @@ export class Strobe {
   private readonly MacLen = 16
 
   strobe_init(
-    description: string
+    description: string,
     // desclen: number
   ): void {
     // operationMap.set(Operation.Ad, Flag.FlagA)
@@ -165,10 +165,10 @@ export class Strobe {
       1,
       0 /* Empty NIST perso string */,
       1,
-      12 * 8 /* 12 = strlen("STROBEvX.Y.Z") */,
+      12 * 8, /* 12 = strlen("STROBEvX.Y.Z") */
     ])
 
-    const s = new TextEncoder().encode("STROBEv1.0.2")
+    const s = new TextEncoder().encode('STROBEv1.0.2')
     const first = new Uint8Array(f.length + s.length)
 
     first.set(f)
@@ -188,7 +188,7 @@ export class Strobe {
       0,
       operateBytes.length,
       0,
-      false
+      false,
     )
   }
 
@@ -234,7 +234,7 @@ export class Strobe {
     count: number,
     cbefore: boolean,
     cafter: boolean,
-    forceF: boolean
+    forceF: boolean,
   ) {
     // Copy data
     const newData = data.slice(startIndex, count)
@@ -278,7 +278,7 @@ export class Strobe {
     starIndex: number,
     count: number,
     length: number,
-    more: boolean
+    more: boolean,
   ): Uint8Array | null {
     // operation is valid?
     // if (!this.operationMap.TryGetValue(operation, out let flags))
@@ -335,7 +335,7 @@ export class Strobe {
       length === 0 ? count : length,
       cBefore,
       cAfter,
-      false
+      false,
     )
 
     if ((flags & (Flag.FlagI | Flag.FlagA)) === (Flag.FlagI | Flag.FlagA)) {
@@ -397,7 +397,7 @@ export class Strobe {
     count: number,
     cbefore: boolean,
     cafter: boolean,
-    forceF: boolean
+    forceF: boolean,
   ): Uint8Array {
     if (cbefore && cafter) {
       // throw new Exception($"either {nameof(cbefore)} or {nameof(cafter)} should be set to false");
@@ -465,7 +465,7 @@ export class Strobe {
     meta: boolean,
     additionalData: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ) {
     this.operate(
       meta,
@@ -474,7 +474,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
+      false,
     )
   }
 
@@ -510,7 +510,7 @@ export class Strobe {
     meta: boolean,
     cleartext: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ): Uint8Array | null {
     return this.operate(
       meta,
@@ -519,7 +519,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
+      false,
     )
   }
 
@@ -555,7 +555,7 @@ export class Strobe {
     meta: boolean,
     cleartext: Uint8Array,
     startIdex: number,
-    count: number
+    count: number,
   ): Uint8Array | null {
     return this.operate(
       meta,
@@ -564,7 +564,7 @@ export class Strobe {
       startIdex,
       count,
       0,
-      false
+      false,
     )
   }
 
@@ -585,7 +585,7 @@ export class Strobe {
       0,
       0,
       outputLength,
-      false
+      false,
     )
   }
 
@@ -621,7 +621,7 @@ export class Strobe {
     meta: boolean,
     mac: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ): boolean {
     const r = this.operate(
       meta,
@@ -630,7 +630,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
+      false,
     )
 
     if (r === null) {
@@ -654,7 +654,7 @@ export class Strobe {
       0,
       0,
       length,
-      false
+      false,
     )
   }
 
@@ -670,7 +670,7 @@ export class Strobe {
   /// </param>
   send_enc_unauthenticated(
     meta: boolean,
-    plaintext: Uint8Array
+    plaintext: Uint8Array,
   ): Uint8Array | null {
     return this.send_enc_unauthenticated_f(meta, plaintext, 0, plaintext.length)
   }
@@ -695,7 +695,7 @@ export class Strobe {
     meta: boolean,
     plaintext: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ) {
     return this.operate(
       meta,
@@ -704,7 +704,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
+      false,
     )
   }
 }

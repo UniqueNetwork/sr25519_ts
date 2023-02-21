@@ -1,5 +1,5 @@
-import { Strobe, Operation, operationToFlagMap } from "./strobe"
-import { RandomGenerator } from "../signingContext"
+import {Strobe, Operation, operationToFlagMap} from './strobe'
+import {RandomGenerator} from '../signingContext'
 
 const textEncoder = new TextEncoder()
 
@@ -21,7 +21,7 @@ class TranscriptRngBuilder {
 
   RekeyWithWitnessBytes(
     label: Uint8Array,
-    witness: Uint8Array
+    witness: Uint8Array,
   ): TranscriptRngBuilder {
     this.strobe.MetaAd(label, false)
     this.strobe.MetaAd(getBytesU32(witness.length), true)
@@ -35,7 +35,7 @@ class TranscriptRngBuilder {
     const bytes = rng.GetRandomArrayU8_32()
 
     const newStrobe = this.strobe.Clone()
-    newStrobe.MetaAd(textEncoder.encode("rng"), false)
+    newStrobe.MetaAd(textEncoder.encode('rng'), false)
     newStrobe.Key(bytes, false)
 
     return newStrobe
@@ -44,7 +44,7 @@ class TranscriptRngBuilder {
 
 export class Transcript {
   obj: Strobe
-  MERLIN_PROTOCOL_LABEL = "Merlin v1.0"
+  MERLIN_PROTOCOL_LABEL = 'Merlin v1.0'
 
   Init(label: string) {
     // strobe_init();
@@ -52,8 +52,8 @@ export class Transcript {
     this.obj.strobe_init(this.MERLIN_PROTOCOL_LABEL)
 
     this.AppendMessage(
-      textEncoder.encode("dom-sep"),
-      textEncoder.encode(label)
+      textEncoder.encode('dom-sep'),
+      textEncoder.encode(label),
     )
   }
 
@@ -81,7 +81,7 @@ export class Transcript {
       0,
       data.length,
       0,
-      more
+      more,
     )
     if (error !== null) {
       // throw new ApplicationException($"{error}");
@@ -96,7 +96,7 @@ export class Transcript {
       0,
       data.length,
       0,
-      more
+      more,
     )
     if (error !== null) {
       // throw new ApplicationException($"{error}");
@@ -112,10 +112,10 @@ export class Transcript {
       0,
       0,
       expectedOutput,
-      more
+      more,
     )
     if (result === null) {
-      throw new Error(`Error in Prf: result is null`)
+      throw new Error('Error in Prf: result is null')
     }
 
     return result
@@ -129,7 +129,7 @@ export class Transcript {
       0,
       data.length,
       0,
-      more
+      more,
     )
     if (error !== null) {
       // throw new Exception($"{error}");
@@ -151,7 +151,7 @@ export class Transcript {
   WitnessBytes(
     label: Uint8Array,
     nonceSeeds: Uint8Array,
-    rng: RandomGenerator
+    rng: RandomGenerator,
   ): Transcript {
     const ns = new Array<Uint8Array>(1)
     ns[0] = nonceSeeds
@@ -161,7 +161,7 @@ export class Transcript {
   WitnessBytesRngL(
     label: Uint8Array,
     nonce_seeds: Uint8Array[],
-    rng: RandomGenerator
+    rng: RandomGenerator,
   ): Transcript {
     let br = this.BuildRng()
     nonce_seeds.forEach((ns) => {
@@ -172,15 +172,15 @@ export class Transcript {
   }
 
   WitnessBytesHdkd(
-    label: Uint8Array, dest_len: number, nonce_seeds: Uint8Array[]
+    label: Uint8Array, dest_len: number, nonce_seeds: Uint8Array[],
   ): Uint8Array {
     const dest = new Uint8Array(dest_len)
 
     let br = this.BuildRng()
-    for (let ns of nonce_seeds) {
+    for (const ns of nonce_seeds) {
       br = br.RekeyWithWitnessBytes(label, ns)
     }
-    let r = br.Finalize(new RandomGenerator())
+    const r = br.Finalize(new RandomGenerator())
     r.FillBytes(dest)
 
     return dest

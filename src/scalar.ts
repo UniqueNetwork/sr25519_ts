@@ -152,7 +152,7 @@ function WrappingSub(a: bigint, b: bigint): bigint {
 
 export function ScalarSub(
   a: BigUint64Array,
-  b: BigUint64Array
+  b: BigUint64Array,
 ): BigUint64Array {
   const difference = new BigUint64Array(5)
   const mask: bigint = (1n << 52n) - 1n
@@ -177,7 +177,7 @@ export function ScalarSub(
 
 export function ScalarAdd(
   a: BigUint64Array,
-  b: BigUint64Array
+  b: BigUint64Array,
 ): BigUint64Array {
   const sum = new BigUint64Array(5)
   const mask: bigint = (1n << 52n) - 1n
@@ -194,7 +194,7 @@ export function ScalarAdd(
 
 export function ScalarMul(
   a: BigUint64Array,
-  b: BigUint64Array
+  b: BigUint64Array,
 ): BigUint64Array {
   const ab = MontgomeryReduce(MulInternal(a, b))
   return MontgomeryReduce(MulInternal(ab, RR))
@@ -226,17 +226,17 @@ function MontgomeryReduce(limbs: bigint[]) {
   const n0 = _part1(limbs[0])
   const n1 = _part1(n0.i1 + limbs[1] + _m(n0.i0, BigInt(l[1])))
   const n2 = _part1(
-    n1.i1 + limbs[2] + _m(n0.i0, BigInt(l[2])) + _m(n1.i0, BigInt(l[1]))
+    n1.i1 + limbs[2] + _m(n0.i0, BigInt(l[2])) + _m(n1.i0, BigInt(l[1])),
   )
   const n3 = _part1(
-    n2.i1 + limbs[3] + _m(n1.i0, BigInt(l[2])) + _m(n2.i0, BigInt(l[1]))
+    n2.i1 + limbs[3] + _m(n1.i0, BigInt(l[2])) + _m(n2.i0, BigInt(l[1])),
   )
   const n4 = _part1(
     n3.i1 +
     limbs[4] +
     _m(n0.i0, BigInt(l[4])) +
     _m(n2.i0, BigInt(l[2])) +
-    _m(n3.i0, BigInt(l[1]))
+    _m(n3.i0, BigInt(l[1])),
   )
 
   // limbs is divisible by R now, so we can divide by R by simply storing the upper half as the result
@@ -245,10 +245,10 @@ function MontgomeryReduce(limbs: bigint[]) {
     limbs[5] +
     _m(n1.i0, BigInt(l[4])) +
     _m(n3.i0, BigInt(l[2])) +
-    _m(n4.i0, BigInt(l[1]))
+    _m(n4.i0, BigInt(l[1])),
   )
   const r1 = _part2(
-    r0.i1 + limbs[6] + _m(n2.i0, BigInt(l[4])) + _m(n4.i0, BigInt(l[2]))
+    r0.i1 + limbs[6] + _m(n2.i0, BigInt(l[4])) + _m(n4.i0, BigInt(l[2])),
   )
   const r2 = _part2(r1.i1 + limbs[7] + _m(n3.i0, BigInt(l[4])))
   const r3 = _part2(r2.i1 + limbs[8] + _m(n4.i0, BigInt(l[4])))
@@ -367,17 +367,16 @@ function topHalf(x: number) {
 }
 
 export function readUint8ArrayIntoBigIntArray(bytes: Uint8Array): bigint[] {
-  const bigInts: bigint[] = [];
+  const bigInts: bigint[] = []
   for (let i = 0; i < bytes.length; i += 8) {
-    let num: bigint = 0n;
+    let num: bigint = 0n
     for (let j = i + 7; j >= i; j--) {
-      num = (num << 8n) | BigInt(bytes[j]);
+      num = (num << 8n) | BigInt(bytes[j])
     }
-    bigInts.push(num);
+    bigInts.push(num)
   }
-  return bigInts;
+  return bigInts
 }
-
 
 export class Scalar {
   public bytes: Uint8Array
@@ -407,7 +406,7 @@ export class Scalar {
 
   static FromBytesModOrderWide(data: Uint8Array): Uint8Array {
     const tt1 = FromBytesWide(data)
-    //todo: replace return type with Scalar
+    // todo: replace return type with Scalar
     return Pack(tt1)
   }
 
@@ -465,7 +464,6 @@ export class Scalar {
     return res
   }
 
-
   // sbyte[]
   NonAdjacentForm(size: number): number[] {
     // sbyte[] naf = new sbyte[256];
@@ -509,7 +507,7 @@ export class Scalar {
         naf[pos] = Number(window)
       } else {
         carry = 1n
-        //naf[pos] = (window as i8).wrapping_sub(width as i8);
+        // naf[pos] = (window as i8).wrapping_sub(width as i8);
         naf[pos] = Number(window - width)
       }
 

@@ -11,6 +11,6 @@ export interface UNIQUE_SDK_SignTxResultResponse {
   signatureType: KeypairType
 }
 
-export type IUniqueSdkSigner = {
+export interface IUniqueSdkSigner {
   sign: (unsignedTxPayload: UNIQUE_SDK_UnsignedTxPayloadBody) => Promise<UNIQUE_SDK_SignTxResultResponse>
 }

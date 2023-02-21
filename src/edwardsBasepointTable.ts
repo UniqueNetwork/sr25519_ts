@@ -1,11 +1,11 @@
-import { Scalar } from './scalar'
-import { EdwardsPoint } from './edwardsPoint'
-import { AffineNielsPoint } from './affineNielsPoint'
+import {Scalar} from './scalar'
+import {EdwardsPoint} from './edwardsPoint'
+import {AffineNielsPoint} from './affineNielsPoint'
 
 export class EdwardsBasepointTable {
   public lt: LookupTable[]
 
-  Mul (sclr: Scalar): EdwardsPoint {
+  Mul(sclr: Scalar): EdwardsPoint {
     const a = Scalar.ToRadix16(sclr.bytes)
     let P = EdwardsPoint.Identity()
 
@@ -35,7 +35,7 @@ export class LookupTable {
   public ep: EdwardsPoint
   public affineNielsPoints: AffineNielsPoint[]
 
-  static FromEdward (ep: EdwardsPoint): LookupTable {
+  static FromEdward(ep: EdwardsPoint): LookupTable {
     const res = new LookupTable()
     res.ep = ep
     res.affineNielsPoints = new AffineNielsPoint[8]()
@@ -46,14 +46,14 @@ export class LookupTable {
     return res
   }
 
-  static FromANPArray (p: AffineNielsPoint[]): LookupTable {
+  static FromANPArray(p: AffineNielsPoint[]): LookupTable {
     const res = new LookupTable()
     res.affineNielsPoints = p
     return res
   }
 
   // x - sbyte
-  Select (x: number): AffineNielsPoint {
+  Select(x: number): AffineNielsPoint {
     // Compute xabs = |x|
     const xmask = x >> 7
     const xabs = ((x + xmask) ^ xmask)
@@ -73,7 +73,7 @@ export class LookupTable {
     return t
   }
 
-  static From (ep: EdwardsPoint): LookupTable {
+  static From(ep: EdwardsPoint): LookupTable {
     return LookupTable.FromEdward(ep)
   }
 }

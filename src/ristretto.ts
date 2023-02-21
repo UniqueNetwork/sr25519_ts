@@ -1,21 +1,20 @@
 import {FieldElement, SQRT_M1} from './fieldElement'
-import {type Scalar} from './scalar'
-import {type EdwardsBasepointTable} from './edwardsBasepointTable'
+import type {Scalar} from './scalar'
+import type {EdwardsBasepointTable} from './edwardsBasepointTable'
 import {EdwardsPoint} from './edwardsPoint'
 import {ProjectivePoint} from './projectivePoint'
 import {NafLookupTable} from './nafLookupTable'
 import {
   AFFINE_ODD_MULTIPLES_OF_BASEPOINT,
-  ED25519_BASEPOINT_TABLE_INNER
+  ED25519_BASEPOINT_TABLE_INNER,
 } from './tables'
-import {formatNumbers} from '../translated/mnemonic/testUtils'
 
 export const INVSQRT_A_MINUS_D = new FieldElement([
   278908739862762n,
   821645201101625n,
   8113234426968n,
   1777959178193151n,
-  2118520810568447n
+  2118520810568447n,
 ])
 
 export class CompressedRistretto {
@@ -74,9 +73,8 @@ export class RistrettoPoint {
   static vartimeDoubleScalarMulBasepoint(
     a: Scalar,
     A: EdwardsPoint,
-    b: Scalar
+    b: Scalar,
   ): EdwardsPoint {
-
     // console.log('a is ok', a.bytes.toString() === `47,22,65,197,127,131,55,10,206,175,12,199,162,219,233,169,198,195,156,216,106,174,24,128,229,162,23,37,178,131,78,5`)
     // console.log('b is ok', b.bytes.toString() === `73,169,253,171,114,135,149,240,248,209,238,64,225,244,19,87,70,53,221,245,134,0,153,2,119,98,93,49,221,3,16,3`)
 

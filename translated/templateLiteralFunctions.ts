@@ -19,5 +19,5 @@ export const hex = (tmpl: TemplateStringsArray, ...values: any[]): Uint8Array =>
   if (!str.match(/^[0-9a-fA-F]+$/)) {
     throw new Error(`Invalid hex string: ${str}`)
   }
-  return new Uint8Array(str.match(/.{1,2}/g)!.map(b => parseInt(b, 16)))
+  return new Uint8Array((str.match(/.{1,2}/g) || []).map(b => parseInt(b, 16)))
 }

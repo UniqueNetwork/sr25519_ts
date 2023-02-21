@@ -1,4 +1,4 @@
-import { FieldElement } from './fieldElement'
+import {FieldElement} from './fieldElement'
 
 export class ProjectiveNielsPoint {
   public Y_plus_X: FieldElement
@@ -6,14 +6,14 @@ export class ProjectiveNielsPoint {
   public Z: FieldElement
   public T2d: FieldElement
 
-  public constructor () {
+  public constructor() {
     this.Y_plus_X = FieldElement.Zero()
     this.Y_minus_X = FieldElement.Zero()
     this.Z = FieldElement.Zero()
     this.T2d = FieldElement.Zero()
   }
 
-  BitXor (a: ProjectiveNielsPoint): ProjectiveNielsPoint {
+  BitXor(a: ProjectiveNielsPoint): ProjectiveNielsPoint {
     const r = new ProjectiveNielsPoint()
     r.Y_plus_X = this.Y_plus_X.BitXor(a.Y_plus_X)
     r.Y_minus_X = this.Y_minus_X.BitXor(a.Y_minus_X)
@@ -22,7 +22,7 @@ export class ProjectiveNielsPoint {
     return r
   }
 
-  BitAnd (a: number): ProjectiveNielsPoint {
+  BitAnd(a: number): ProjectiveNielsPoint {
     const aa = BigInt(a)
     const r = new ProjectiveNielsPoint()
     r.Y_plus_X = this.Y_plus_X.BitAnd(aa)
@@ -32,7 +32,7 @@ export class ProjectiveNielsPoint {
     return r
   }
 
-  Negate (): ProjectiveNielsPoint {
+  Negate(): ProjectiveNielsPoint {
     const r = new ProjectiveNielsPoint()
     r.Y_plus_X = this.Y_plus_X.Negate()
     r.Y_minus_X = this.Y_minus_X.Negate()
@@ -41,7 +41,7 @@ export class ProjectiveNielsPoint {
     return r
   }
 
-  Copy (): ProjectiveNielsPoint {
+  Copy(): ProjectiveNielsPoint {
     const r = new ProjectiveNielsPoint()
     r.Y_plus_X = this.Y_plus_X.Clone()
     r.Y_minus_X = this.Y_minus_X.Clone()
@@ -50,18 +50,18 @@ export class ProjectiveNielsPoint {
     return r
   }
 
-  GetPoint (): ProjectiveNielsPoint {
+  GetPoint(): ProjectiveNielsPoint {
     return this
   }
 
-  FromPoint (a: ProjectiveNielsPoint): void {
+  FromPoint(a: ProjectiveNielsPoint): void {
     this.Y_plus_X = a.Y_plus_X
     this.Y_minus_X = a.Y_minus_X
     this.Z = a.Z
     this.T2d = a.T2d
   }
 
-  ConditionalAssign (a: ProjectiveNielsPoint, choice: boolean): void {
+  ConditionalAssign(a: ProjectiveNielsPoint, choice: boolean): void {
     // if choice = 0, mask = (-0) = 0000...0000
     // if choice = 1, mask = (-1) = 1111...1111
     const mask = choice ? 0b1111_1111_1111_1111 : 0b0000_0000_0000_0000
@@ -70,7 +70,7 @@ export class ProjectiveNielsPoint {
     this.FromPoint(this.GetPoint().BitXor(this.BitXor(a).BitAnd(mask)))
   }
 
-  ConditionalNegate (choice: boolean): void {
+  ConditionalNegate(choice: boolean): void {
     const p = this.GetPoint()
     this.ConditionalAssign(p, choice)
   }

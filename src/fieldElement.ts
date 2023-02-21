@@ -1,4 +1,4 @@
-import { U64size, _m as m } from "./scalar"
+import {U64size, _m as m} from './scalar'
 
 const LOW_51_BIT_MASK = (1n << 51n) - 1n
 

@@ -2,15 +2,15 @@ export const toTwos = (value: bigint, width: number | bigint): bigint => {
   return value >= 0 ? value : (1n << BigInt(width)) + value
 }
 
-const DEFAULT_OPTS = {bitLength: -1, isLe: true, isNegative: false};
+const DEFAULT_OPTS = {bitLength: -1, isLe: true, isNegative: false}
 
-export const bigIntToUint8Array = (value: bigint | null, options: { bitLength?: number, isLe?: boolean, isNegative?: boolean } = DEFAULT_OPTS): Uint8Array => {
-  options = {...DEFAULT_OPTS, ...options,}
+export const bigIntToUint8Array = (value: bigint | null, options: {bitLength?: number, isLe?: boolean, isNegative?: boolean} = DEFAULT_OPTS): Uint8Array => {
+  options = {...DEFAULT_OPTS, ...options}
   const {bitLength, isLe, isNegative} = options
 
   const byteLength = Math.ceil(bitLength === -1
-    ? (value ?? 0n).toString(2).length / 8 // if bitLength is -1, take the real value's bit length
-    : (bitLength || 0) / 8 // if bitLength is not -1, take the bitLength
+    ? (value || 0n).toString(2).length / 8 // if bitLength is -1, take the real value's bit length
+    : (bitLength || 0) / 8, // if bitLength is not -1, take the bitLength
   )
 
   if (!value) {
@@ -19,18 +19,18 @@ export const bigIntToUint8Array = (value: bigint | null, options: { bitLength?: 
 
   const bn = isNegative
     ? toTwos(value, byteLength * 8)
-    : value;
+    : value
 
-  const arr = bn
+  const arr = (bn
     .toString(16)
     .padStart(byteLength * 2, '0')
-    .match(/.{2}/g)!
-    .map(x => parseInt(x, 16))
+    .match(/.{2}/g) || []
+  ).map(x => parseInt(x, 16))
 
   return new Uint8Array(isLe ? arr.reverse() : arr)
 }
 
-const REGEX_HEX_PREFIXED = /^0x[\da-fA-F]+$/;
+const REGEX_HEX_PREFIXED = /^0x[\da-fA-F]+$/
 
 export function isHex(value: unknown, bitLength = -1, ignoreLength?: boolean): boolean {
   return typeof value === 'string' && (value === '0x' || REGEX_HEX_PREFIXED.test(value)) && (
@@ -56,9 +56,9 @@ export const hexStringToUint8Array = (str: string | null, bitLength: number = -1
   }
 
   if (bitLength !== -1) {
-    str = (bitLength / 4 < str.length)    // if the bit length is less than the string length
-      ? str.slice(0, bitLength / 4)       // slice the string to the bit length
-      : str.padStart(bitLength / 4, '0')  // otherwise, pad the string to the bit length
+    str = (bitLength / 4 < str.length) // if the bit length is less than the string length
+      ? str.slice(0, bitLength / 4) // slice the string to the bit length
+      : str.padStart(bitLength / 4, '0') // otherwise, pad the string to the bit length
   }
   if (str.length % 2 !== 0) {
     str = str + '0'
@@ -75,24 +75,23 @@ export const hexStringToUint8Array = (str: string | null, bitLength: number = -1
 }
 
 export function u8aConcatStrict(u8as: readonly Uint8Array[], length = 0): Uint8Array {
-  let offset = 0;
+  let offset = 0
 
   if (!length) {
     for (let i = 0; i < u8as.length; i++) {
-      length += u8as[i].length;
+      length += u8as[i].length
     }
   }
 
-  const result = new Uint8Array(length);
+  const result = new Uint8Array(length)
 
   for (let i = 0; i < u8as.length; i++) {
-    result.set(u8as[i], offset);
-    offset += u8as[i].length;
+    result.set(u8as[i], offset)
+    offset += u8as[i].length
   }
 
-  return result;
+  return result
 }
-
 
 const maxU8 = 0b111111n
 const maxU16 = 0b11111111111111n
@@ -115,7 +114,7 @@ const compactToU8a = (value: bigint | number): Uint8Array => {
   let length = u8a.length
 
   while (u8a[length - 1] === 0) {
-    length--;
+    length--
   }
 
   if (length < 4) {
@@ -124,14 +123,13 @@ const compactToU8a = (value: bigint | number): Uint8Array => {
 
   return u8aConcatStrict([
     new Uint8Array([((length - 4) << 2) + 0b11]),
-    u8a.subarray(0, length)
+    u8a.subarray(0, length),
   ])
-
 }
 
 export function compactAddLength(input: Uint8Array): Uint8Array {
   return u8aConcatStrict([
     compactToU8a(input.length),
-    input
-  ]);
+    input,
+  ])
 }

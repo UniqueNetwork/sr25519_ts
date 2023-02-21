@@ -32,7 +32,7 @@ const encode_usize_as_u32 = (x: number): Uint8Array => {
 }
 
 export class Transcript {
-  private strobe: Strobe128
+  private readonly strobe: Strobe128
 
   constructor(label: Uint8Array) {
     this.strobe = new Strobe128(MERLIN_PROTOCOL_LABEL)
@@ -73,27 +73,26 @@ export class Transcript {
 
   witness_bytes_rng(label: Uint8Array, dest: Uint8Array, nonce_seeds: Uint8Array[]) {
     let br = this.build_rng()
-    for (let ns of nonce_seeds) {
+    for (const ns of nonce_seeds) {
       br = br.rekey_with_witness_bytes(label, ns)
     }
-    let r = br.finalize()
+    const r = br.finalize()
     r.fill_bytes(dest)
   }
 
   witness_bytes(label: Uint8Array, dest: Uint8Array, nonce_seeds: Uint8Array[]) {
-    return this.witness_bytes_rng(label, dest, nonce_seeds)
+    this.witness_bytes_rng(label, dest, nonce_seeds)
   }
 
   witness_scalar(label: Uint8Array, nonce_seeds: Uint8Array[]) {
-    let scalar_bytes = new Uint8Array(64)
+    const scalar_bytes = new Uint8Array(64)
     this.witness_bytes(label, scalar_bytes, nonce_seeds)
-    //todo:
-    return
+    // todo:
   }
 }
 
 export class TranscriptRngBuilder {
-  private strobe: Strobe128
+  private readonly strobe: Strobe128
 
   constructor(label: Uint8Array | Strobe128) {
     if (label instanceof Uint8Array) {
@@ -101,7 +100,7 @@ export class TranscriptRngBuilder {
     } else if (label instanceof Strobe128) {
       this.strobe = label
     } else {
-      throw new Error(`TranscriptRngBuilder constructor: label is not Uint8Array or Strobe128`)
+      throw new Error('TranscriptRngBuilder constructor: label is not Uint8Array or Strobe128')
     }
   }
 
@@ -120,7 +119,7 @@ export class TranscriptRngBuilder {
 
   finalize(generateRandomBytes32?: () => Uint8Array) {
     // let bytes = new Uint8Array(32)
-    let bytes = generateRandomBytes32 ? generateRandomBytes32() : randomBytes(32)
+    const bytes = generateRandomBytes32 ? generateRandomBytes32() : randomBytes(32)
 
     this.strobe.meta_ad(b`rng`, false)
     this.strobe.key(bytes, false)
@@ -129,7 +128,7 @@ export class TranscriptRngBuilder {
 }
 
 export class TranscriptRng {
-  private strobe: Strobe128
+  private readonly strobe: Strobe128
 
   constructor(strobe: Strobe128) {
     this.strobe = strobe

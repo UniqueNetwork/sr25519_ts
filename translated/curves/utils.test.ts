@@ -21,4 +21,3 @@ describe('utils', () => {
     expect(x).toEqual(y)
   })
 })
-

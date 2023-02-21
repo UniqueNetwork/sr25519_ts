@@ -19,7 +19,7 @@ export class Keypair {
 
   static FromSecretKeyBytes(secretKeyBytes: Uint8Array): Keypair {
     if (secretKeyBytes.length !== 64) {
-      throw new Error(`Expected secret key with ${64} bytes, found ${secretKeyBytes.length}`);
+      throw new Error(`Expected secret key with ${64} bytes, found ${secretKeyBytes.length}`)
     }
     const secretKey = SecretKey.FromBytes(secretKeyBytes)
     const publicKey = secretKey.ToPublicKey()
@@ -27,11 +27,11 @@ export class Keypair {
   }
 
   static FromUri(uri: string): Keypair {
-    return parseUriAndDerive(uri);
+    return parseUriAndDerive(uri)
   }
 
   static async FromUriAsync(uri: string): Promise<Keypair> {
-    return await parseUriAndDeriveAsync(uri);
+    return await parseUriAndDeriveAsync(uri)
   }
 
   ToBytes(): Uint8Array {

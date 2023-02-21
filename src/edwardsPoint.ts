@@ -1,8 +1,8 @@
-import { FieldElement } from './fieldElement'
-import { CompletedPoint } from './completedPoint'
-import { ProjectivePoint } from './projectivePoint'
-import { AffineNielsPoint } from './affineNielsPoint'
-import { ProjectiveNielsPoint } from './projectiveNielsPoint'
+import {FieldElement} from './fieldElement'
+import {CompletedPoint} from './completedPoint'
+import {ProjectivePoint} from './projectivePoint'
+import {AffineNielsPoint} from './affineNielsPoint'
+import {ProjectiveNielsPoint} from './projectiveNielsPoint'
 
 /// Edwards `2*d` value, equal to `2*(-121665/121666) mod p`.
 const EDWARDS_D2 = new FieldElement([
@@ -10,14 +10,14 @@ const EDWARDS_D2 = new FieldElement([
   932731440258426n,
   1072319116312658n,
   1815898335770999n,
-  633789495995903n
+  633789495995903n,
 ])
 const EDWARDS_D = new FieldElement([
   929955233495203n,
   466365720129213n,
   1662059464998953n,
   2033849074728123n,
-  1442794654840575n
+  1442794654840575n,
 ])
 
 export class EdwardsPoint {
@@ -26,11 +26,11 @@ export class EdwardsPoint {
   public Z: FieldElement
   public T: FieldElement
 
-  FromElems (
+  FromElems(
     x: FieldElement,
     y: FieldElement,
     z: FieldElement,
-    t: FieldElement
+    t: FieldElement,
   ) {
     this.X = x
     this.Y = y
@@ -38,11 +38,11 @@ export class EdwardsPoint {
     this.T = t
   }
 
-  static EdwardsPointFromElems (
+  static EdwardsPointFromElems(
     x: FieldElement,
     y: FieldElement,
     z: FieldElement,
-    t: FieldElement
+    t: FieldElement,
   ) {
     const ep = new EdwardsPoint()
     ep.X = x
@@ -52,7 +52,7 @@ export class EdwardsPoint {
     return ep
   }
 
-  public Equals (a: EdwardsPoint): boolean {
+  public Equals(a: EdwardsPoint): boolean {
     let result = true
     for (let i = 0; i < 5; i++) {
       result =
@@ -66,7 +66,7 @@ export class EdwardsPoint {
     return result
   }
 
-  Copy (): EdwardsPoint {
+  Copy(): EdwardsPoint {
     const ep = new EdwardsPoint()
     ep.FromElems(this.X, this.Y, this.Z, this.T)
     return ep
@@ -76,7 +76,7 @@ export class EdwardsPoint {
     const s = FieldElement.FromBytes(bytes)
 
     if (s.IsNegative()) {
-      throw new Error(`Compressed point decompression error: s is negative`)
+      throw new Error('Compressed point decompression error: s is negative')
     }
 
     // Step 2.  Compute (X:Y:Z:T).
@@ -109,12 +109,12 @@ export class EdwardsPoint {
     return EdwardsPoint.EdwardsPointFromElems(x, y, one, t)
   }
 
-  static Double (point: EdwardsPoint): EdwardsPoint {
+  static Double(point: EdwardsPoint): EdwardsPoint {
     return point.ToProjective().Double().ToExtended()
   }
 
   /// Compute \\([2\^k] P \\) by successive doublings. Requires \\( k > 0 \\).
-  MulByPow2 (k: number): EdwardsPoint {
+  MulByPow2(k: number): EdwardsPoint {
     let r: CompletedPoint
     let s = this.ToProjective()
     for (let i = 0; i < k - 1; i++) {
@@ -126,34 +126,34 @@ export class EdwardsPoint {
     return s.Double().ToExtended()
   }
 
-  static Identity (): EdwardsPoint {
+  static Identity(): EdwardsPoint {
     return EdwardsPoint.EdwardsPointFromElems(
       FieldElement.Zero(),
       FieldElement.One(),
       FieldElement.One(),
-      FieldElement.Zero()
+      FieldElement.Zero(),
     )
   }
 
-  Negate (): EdwardsPoint {
+  Negate(): EdwardsPoint {
     return EdwardsPoint.EdwardsPointFromElems(
       this.X.Negate(),
       this.Y,
       this.Z,
-      this.T.Negate()
+      this.T.Negate(),
     )
   }
 
-  ToExtended (): EdwardsPoint {
+  ToExtended(): EdwardsPoint {
     return EdwardsPoint.EdwardsPointFromElems(
       this.X.Mul(this.T),
       this.Y.Mul(this.Z),
       this.Z.Mul(this.T),
-      this.X.Mul(this.Y)
+      this.X.Mul(this.Y),
     )
   }
 
-  AddPnp (other: ProjectiveNielsPoint): CompletedPoint {
+  AddPnp(other: ProjectiveNielsPoint): CompletedPoint {
     const Y_plus_X = this.Y.Add(this.X)
     const Y_minus_X = this.Y.Sub(this.X)
     const PP = Y_plus_X.Mul(other.Y_plus_X)
@@ -170,7 +170,7 @@ export class EdwardsPoint {
     return cp
   }
 
-  AddAnp (other: AffineNielsPoint): CompletedPoint {
+  AddAnp(other: AffineNielsPoint): CompletedPoint {
     const Y_plus_X = this.Y.Add(this.X)
     const Y_minus_X = this.Y.Sub(this.X)
     const PP = Y_plus_X.Mul(other.Y_plus_X)
@@ -186,11 +186,11 @@ export class EdwardsPoint {
     return cp
   }
 
-  AddEp (other: EdwardsPoint): EdwardsPoint {
+  AddEp(other: EdwardsPoint): EdwardsPoint {
     return this.AddPnp(other.ToProjectiveNiels()).ToExtended()
   }
 
-  SubAnp (other: AffineNielsPoint): CompletedPoint {
+  SubAnp(other: AffineNielsPoint): CompletedPoint {
     const Y_plus_X = this.Y.Add(this.X)
     const Y_minus_X = this.Y.Sub(this.X)
     const PM = Y_plus_X.Mul(other.Y_minus_X)
@@ -206,7 +206,7 @@ export class EdwardsPoint {
     return cp
   }
 
-  SubPnp (other: ProjectiveNielsPoint): CompletedPoint {
+  SubPnp(other: ProjectiveNielsPoint): CompletedPoint {
     const Y_plus_X = this.Y.Add(this.X)
     const Y_minus_X = this.Y.Sub(this.X)
     const PM = Y_plus_X.Mul(other.Y_minus_X)
@@ -223,7 +223,7 @@ export class EdwardsPoint {
     return cp
   }
 
-  ToProjectiveNiels (): ProjectiveNielsPoint {
+  ToProjectiveNiels(): ProjectiveNielsPoint {
     const cp = new ProjectiveNielsPoint()
     cp.Y_plus_X = this.Y.Add(this.X)
     cp.Y_minus_X = this.Y.Sub(this.X)
@@ -232,7 +232,7 @@ export class EdwardsPoint {
     return cp
   }
 
-  ToProjective (): ProjectivePoint {
+  ToProjective(): ProjectivePoint {
     const cp = new ProjectivePoint()
     cp.X = this.X
     cp.Y = this.Y
@@ -240,7 +240,7 @@ export class EdwardsPoint {
     return cp
   }
 
-  ToAffineNiels (): AffineNielsPoint {
+  ToAffineNiels(): AffineNielsPoint {
     // const recip = this.Z.Invert()
     // const x = this.X.Mul(recip)
     // const y = this.Y.Mul(recip)

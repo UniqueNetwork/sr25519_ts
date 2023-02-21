@@ -9,6 +9,6 @@ describe('Template literal functions', () => {
   test('Template literal function "hex"', () => {
     expect(hex`0xdeadbeef`).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]))
     expect(hex`deadbeef`).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]))
-    expect(() => {hex`0xdeadbeefg`}).toThrow('Invalid hex string')
+    expect(() => { hex`0xdeadbeefg` }).toThrow('Invalid hex string')
   })
 })

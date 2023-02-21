@@ -7,12 +7,12 @@ import {SecretKey} from '../../src/signingContext'
 import {b} from '../templateLiteralFunctions'
 import {Scalar, ScalarAdd, ScalarBigintToBytesForm, ScalarBytesToBigintForm} from '../../src/scalar'
 
-export const DEFAULT_MNEMONIC = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk';
+export const DEFAULT_MNEMONIC = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk'
 
 const REGEX_DIGITS_ONLY = /^\d+$/
-export type Derivation = { value: string, hard?: boolean, cc: Uint8Array }
+export interface Derivation { value: string, hard?: boolean, cc: Uint8Array }
 
-export const parseUri = (uri: string): { mnemonic: string, password: string, derivations: Derivation[] } => {
+export const parseUri = (uri: string): {mnemonic: string, password: string, derivations: Derivation[]} => {
   const derivations: Derivation[] = []
 
   const [beforePassword, password = ''] = uri.split('///')
@@ -20,14 +20,18 @@ export const parseUri = (uri: string): { mnemonic: string, password: string, der
 
   let mnemonic = hardSeparatedParts.shift() || DEFAULT_MNEMONIC
   const mnemonicParts = mnemonic.split('/')
-  mnemonic = mnemonicParts.shift()!
+  mnemonic = mnemonicParts.shift() || ''
+  if (!mnemonic) {
+    throw new Error(`Invalid mnemonic: ${uri}`)
+  }
   if (mnemonicParts.length) {
     derivations.push(...mnemonicParts.map(value => ({value, cc: getChainCode(value)})))
   }
 
   for (const part of hardSeparatedParts) {
     const softSeparatedParts = part.split('/')
-    const hard = softSeparatedParts.shift()!
+    const hard = softSeparatedParts.shift()
+    if (!hard) throw new Error('Invalid hard derivation')
     derivations.push({value: hard, hard: true, cc: getChainCode(hard)})
     derivations.push(...softSeparatedParts.map(value => ({value, cc: getChainCode(value)})))
   }
@@ -96,15 +100,14 @@ export const deriveSoft = (keypair: Keypair, chainCode: Uint8Array): Keypair => 
   const derivedSecretKeyKey = Scalar.FromBytes(ScalarBigintToBytesForm(
     ScalarAdd(
       ScalarBytesToBigintForm(keypair.secretKey.key.bytes.slice()),
-      ScalarBytesToBigintForm(scalar)
-    )
+      ScalarBytesToBigintForm(scalar),
+    ),
   ))
   const derivedSecretKey = SecretKey.FromScalarAndNonce(derivedSecretKeyKey, nonce)
   const publicKey = derivedSecretKey.ToPublicKey()
 
   return new Keypair(publicKey, derivedSecretKey)
 }
-
 
 const processDerivations = (keypair: Keypair, derivations: Derivation[]): Keypair => {
   for (const {hard, cc} of derivations) {
@@ -123,7 +126,7 @@ export const parseUriAndDerive = (uri: string): Keypair => {
   )
 }
 
-export const parseUriAndDeriveAsync = async (uri: string): Promise<Keypair> => {
+export const parseUriAndDeriveAsync = async(uri: string): Promise<Keypair> => {
   const {mnemonic, password, derivations} = parseUri(uri)
 
   return processDerivations(

@@ -8,9 +8,7 @@ import {
   ScalarBytesToBigintForm,
 } from './scalar'
 import {CompressedRistretto, RistrettoBasepointTable, RistrettoPoint} from './ristretto'
-import {EdwardsPoint} from './edwardsPoint'
 import {sha512} from '@noble/hashes/sha512'
-import {printTranscriptMax} from '../translated/mnemonic/testUtils'
 
 interface ISigningContext {
   BytesClone: (data: Uint8Array) => Transcript
@@ -39,12 +37,12 @@ export class SecretKey {
   }
 
   static FromBytes(bytes: Uint8Array): SecretKey {
-    if (bytes.length !== 64) throw new Error(`Invalid secret key length`)
+    if (bytes.length !== 64) throw new Error('Invalid secret key length')
 
     const secretKey: SecretKey = new SecretKey()
 
     secretKey.key = Scalar.FromBytes(
-      Scalar.DivideScalarBytesByCofactor(bytes.slice(0, 32))
+      Scalar.DivideScalarBytesByCofactor(bytes.slice(0, 32)),
     )
 
     secretKey.nonce = bytes.slice(32, 64)
@@ -102,9 +100,9 @@ export class SecretKey {
   sign(
     message: Uint8Array,
     publicKey: PublicKey,
-    rng: RandomGenerator = new RandomGenerator()
+    rng: RandomGenerator = new RandomGenerator(),
   ): Signature {
-    const signingContext = new SigningContext085(textEncoder.encode("substrate"))
+    const signingContext = new SigningContext085(textEncoder.encode('substrate'))
 
     const st = new SigningTranscript(signingContext)
 
@@ -116,7 +114,7 @@ export class SecretKey {
     const r = st.WitnessScalarLabel(
       textEncoder.encode('signing'),
       this.nonce,
-      rng
+      rng,
     )
     const sc = new Scalar()
     sc.bytes = r
@@ -130,14 +128,14 @@ export class SecretKey {
     const scalar = ScalarAdd(
       ScalarMul(
         ScalarBytesToBigintForm(k),
-        ScalarBytesToBigintForm(this.key.ToBytes())
+        ScalarBytesToBigintForm(this.key.ToBytes()),
       ),
-      ScalarBytesToBigintForm(r)
+      ScalarBytesToBigintForm(r),
     )
 
     const sig = Signature.FromCompressedRistrettoAndScalar(
       R,
-      Scalar.FromBytes(ScalarBigintToBytesForm(scalar))
+      Scalar.FromBytes(ScalarBigintToBytesForm(scalar)),
     )
 
     return sig
@@ -164,7 +162,7 @@ export class PublicKey {
   }
 
   verify(message: Uint8Array, signatureBytes: Uint8Array): boolean {
-    let signingTranscript = new SigningContext085(textEncoder.encode("substrate")).BytesClone(message)
+    const signingTranscript = new SigningContext085(textEncoder.encode('substrate')).BytesClone(message)
 
     const signature = Signature.FromBytes(signatureBytes)
 
@@ -177,7 +175,7 @@ export class PublicKey {
     signingTranscript.AppendMessage(textEncoder.encode('sign:R'), signature.R.ToBytes())
 
     const k = Scalar.FromBytes(Scalar.FromBytesModOrderWide(
-      signingTranscript.ChallengeBytes(textEncoder.encode('sign:c'), 64)
+      signingTranscript.ChallengeBytes(textEncoder.encode('sign:c'), 64),
     ))
 
     // printTranscriptMax(signingTranscript)
@@ -191,7 +189,7 @@ export class PublicKey {
     const R = RistrettoPoint.vartimeDoubleScalarMulBasepoint(
       k,
       negA.Ep,
-      signature.S
+      signature.S,
     )
     const compressed = new RistrettoPoint(R).Compress()
     return isUint8ArrayEqual(compressed.ToBytes(), signature.R.ToBytes())
@@ -218,20 +216,19 @@ class Signature {
   static FromBytes(bytes: Uint8Array) {
     const signature = new Signature()
     if (bytes.length !== 64) {
-      throw new Error(`Invalid signature length`)
+      throw new Error('Invalid signature length')
     }
 
     const lower = bytes.slice(0, 32)
     const upper = bytes.slice(32, 64)
     if ((upper[31] & 128) === 0) {
-      throw new Error(`Invalid signature`)
+      throw new Error('Invalid signature')
     }
     upper[31] &= 127
 
-
     signature.R = CompressedRistretto.FromBytes(lower)
 
-    //todo: proper check scalar and reduce it if necessary
+    // todo: proper check scalar and reduce it if necessary
     signature.S = Scalar.FromBytes(upper)
 
     return signature
@@ -267,7 +264,7 @@ export class SigningTranscript {
     this.CommitBytesB(
       this.context.GetTranscript(),
       textEncoder.encode('proto-name'),
-      label
+      label,
     )
   }
 
@@ -282,7 +279,7 @@ export class SigningTranscript {
   WitnessScalarLabel(
     label: Uint8Array,
     bytes: Uint8Array,
-    rng: RandomGenerator
+    rng: RandomGenerator,
   ): Uint8Array {
     return this.WitnessScalarFR(this.context.GetTranscript(), label, bytes, rng)
   }
@@ -315,7 +312,7 @@ export class SigningTranscript {
   CommitPointF(
     ts: Transcript,
     label: Uint8Array,
-    compressedRistretto: Uint8Array
+    compressedRistretto: Uint8Array,
   ) {
     this.CommitBytesB(ts, label, compressedRistretto)
   }
@@ -323,7 +320,7 @@ export class SigningTranscript {
   WitnessScalarSR(
     ts: Transcript,
     nonce: Uint8Array,
-    rng: RandomGenerator
+    rng: RandomGenerator,
   ): Uint8Array {
     const t = ts.WitnessBytes(new Uint8Array(0), nonce, rng)
 
@@ -338,7 +335,7 @@ export class SigningTranscript {
     ts: Transcript,
     label: Uint8Array,
     nonce: Uint8Array,
-    rng: RandomGenerator
+    rng: RandomGenerator,
   ): Uint8Array {
     const t = ts.WitnessBytes(label, nonce, rng)
 

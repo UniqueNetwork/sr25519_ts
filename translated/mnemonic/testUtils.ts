@@ -2,14 +2,14 @@ import type {Transcript} from '../merlin/transcript'
 import type {Transcript as TranscriptMax} from '../../src/external/merlin'
 
 export const formatNumbers = (numbers: number[] | Uint8Array): string => {
-  let output = '';
+  let output = ''
   for (let i = 0; i < numbers.length; i++) {
-    output += numbers[i] + ',';
+    output += numbers[i].toString() + ','
     if ((i + 1) % 16 === 0) {
-      output += '\n';
+      output += '\n'
     }
   }
-  return output;
+  return output
 }
 export const printTranscript = (transcript: Transcript) => {
   const strobe = transcript.cloneStrobe().clone().cloneState()

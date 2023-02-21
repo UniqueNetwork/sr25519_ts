@@ -1,13 +1,13 @@
-import { FieldElement } from './fieldElement'
-import { CompletedPoint } from './completedPoint'
-import { EdwardsPoint } from './edwardsPoint'
+import {FieldElement} from './fieldElement'
+import {CompletedPoint} from './completedPoint'
+import {EdwardsPoint} from './edwardsPoint'
 
 export class ProjectivePoint {
   public X: FieldElement
   public Y: FieldElement
   public Z: FieldElement
 
-  Double (): CompletedPoint {
+  Double(): CompletedPoint {
     const XX = this.X.Square()
     const YY = this.Y.Square()
     const ZZ2 = this.Z.Square2()
@@ -25,7 +25,7 @@ export class ProjectivePoint {
     return r
   }
 
-  static Identity (): ProjectivePoint {
+  static Identity(): ProjectivePoint {
     const r = new ProjectivePoint()
     r.X = FieldElement.Zero()
     r.Y = FieldElement.One()
@@ -33,12 +33,12 @@ export class ProjectivePoint {
     return r
   }
 
-  ToExtended (): EdwardsPoint {
+  ToExtended(): EdwardsPoint {
     return EdwardsPoint.EdwardsPointFromElems(
       this.X.Mul(this.Z),
       this.Y.Mul(this.Z),
       this.Z.Square(),
-      this.X.Mul(this.Y)
+      this.X.Mul(this.Y),
     )
   }
 }
