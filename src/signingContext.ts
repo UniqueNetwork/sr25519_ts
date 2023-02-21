@@ -1,14 +1,14 @@
-import { Transcript, getBytesU32 } from "./external/merlin"
-import { randomBytes } from "@noble/hashes/utils"
+import {Transcript, getBytesU32} from './external/merlin'
+import {randomBytes} from '@noble/hashes/utils'
 import {
   Scalar,
   ScalarAdd,
   ScalarMul,
   ScalarBigintToBytesForm,
   ScalarBytesToBigintForm,
-} from "./scalar"
-import { RistrettoBasepointTable, RistrettoPoint } from "./ristretto"
-import { EdwardsPoint } from "./edwardsPoint"
+} from './scalar'
+import {RistrettoBasepointTable, RistrettoPoint} from './ristretto'
+import {EdwardsPoint} from './edwardsPoint'
 import {sha512} from '@noble/hashes/sha512'
 
 interface ISigningContext {
@@ -51,10 +51,6 @@ export class SecretKey {
     return secretKey
   }
 
-  ToBytes(): Uint8Array {
-    return new Uint8Array([...this.key.bytes, ...this.nonce])
-  }
-
   static FromScalarAndNonce(scalar: Scalar, nonce: Uint8Array): SecretKey {
     const secretKey: SecretKey = new SecretKey()
 
@@ -83,6 +79,15 @@ export class SecretKey {
     return secretKey
   }
 
+  ToBytes(): Uint8Array {
+    const bytes = new Uint8Array(64)
+    const key = this.key.bytes.slice()
+    Scalar.MultiplyScalarBytesByCofactor(key)
+    bytes.set(key, 0)
+    bytes.set(this.nonce.slice(), 32)
+    return bytes
+  }
+
   ToPublicKey(): PublicKey {
     const publicKey = new PublicKey()
 
@@ -91,13 +96,6 @@ export class SecretKey {
     publicKey.key = point.ToBytes()
 
     return publicKey
-  }
-
-  ToEd25519Bytes(): Uint8Array {
-    const bytes = new Uint8Array(64)
-    bytes.set(this.key.bytes.slice())
-    bytes.set(this.nonce.slice(), 32)
-    return bytes
   }
 }
 
@@ -146,6 +144,7 @@ class Signature {
     return mergedArray
   }
 }
+
 class CompressedRistretto {
   ToBytes(): Uint8Array {
     return new Uint8Array(2)
@@ -163,7 +162,7 @@ export class SigningTranscript {
   SetProtocolName(label: Uint8Array) {
     this.CommitBytesB(
       this.context.GetTranscript(),
-      textEncoder.encode("proto-name"),
+      textEncoder.encode('proto-name'),
       label
     )
   }
@@ -252,17 +251,17 @@ export class SigningContext085 implements ISigningContext {
 
   constructor(context: Uint8Array) {
     this.ts = new Transcript()
-    this.ts.Init("SigningContext")
+    this.ts.Init('SigningContext')
     this.ts.AppendMessage(new Uint8Array(), context)
   }
 
   Bytes(data: Uint8Array) {
-    this.ts.AppendMessage(textEncoder.encode("sign-bytes"), data)
+    this.ts.AppendMessage(textEncoder.encode('sign-bytes'), data)
   }
 
   BytesClone(data: Uint8Array): Transcript {
     const clone = this.ts.Clone()
-    clone.AppendMessage(textEncoder.encode("sign-bytes"), data)
+    clone.AppendMessage(textEncoder.encode('sign-bytes'), data)
     return clone
   }
 
@@ -278,11 +277,11 @@ export class SigningContext085 implements ISigningContext {
     const sig = new Signature()
     sig.FromBytes(signature)
 
-    st.SetProtocolName(textEncoder.encode("Schnorr-sig"))
-    st.CommitPointBytes(textEncoder.encode("sign:pk"), publicKey.key)
-    st.CommitPointBytes(textEncoder.encode("sign:R"), sig.R)
+    st.SetProtocolName(textEncoder.encode('Schnorr-sig'))
+    st.CommitPointBytes(textEncoder.encode('sign:pk'), publicKey.key)
+    st.CommitPointBytes(textEncoder.encode('sign:R'), sig.R)
 
-    const k = st.ChallengeScalar(textEncoder.encode("sign:c")) // context, message, A/public_key, R=rG
+    const k = st.ChallengeScalar(textEncoder.encode('sign:c')) // context, message, A/public_key, R=rG
 
     const A = EdwardsPoint.Decompress(publicKey.key)
     const negA = A.Negate()
@@ -305,11 +304,11 @@ export class SigningContext085 implements ISigningContext {
     publicKey: PublicKey,
     rng: RandomGenerator
   ): Signature {
-    st.SetProtocolName(textEncoder.encode("Schnorr-sig"))
-    st.CommitPointBytes(textEncoder.encode("sign:pk"), publicKey.key)
+    st.SetProtocolName(textEncoder.encode('Schnorr-sig'))
+    st.CommitPointBytes(textEncoder.encode('sign:pk'), publicKey.key)
 
     const r = st.WitnessScalarLabel(
-      textEncoder.encode("signing"),
+      textEncoder.encode('signing'),
       secretKey.nonce,
       rng
     )
@@ -319,9 +318,9 @@ export class SigningContext085 implements ISigningContext {
     const tbl = new RistrettoBasepointTable()
     const R = tbl.Mul(sc).Compress()
 
-    st.CommitPoint(textEncoder.encode("sign:R"), R)
+    st.CommitPoint(textEncoder.encode('sign:R'), R)
 
-    const k = st.ChallengeScalar(textEncoder.encode("sign:c")) // context, message, A/public_key, R=rG
+    const k = st.ChallengeScalar(textEncoder.encode('sign:c')) // context, message, A/public_key, R=rG
     const scalar = ScalarAdd(
       ScalarMul(
         ScalarBytesToBigintForm(k),

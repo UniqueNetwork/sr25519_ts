@@ -4,7 +4,7 @@ import {mnemonicToMiniSecretAsync, mnemonicToMiniSecret} from './mnemonic'
 import {Keypair} from '../../src/keypair'
 import {Transcript} from '../merlin/transcript'
 import {SecretKey} from '../../src/signingContext'
-import {b} from '../merlin/utils'
+import {b} from '../templateLiteralFunctions'
 import {Scalar, ScalarAdd, ScalarBigintToBytesForm, ScalarBytesToBigintForm} from '../../src/scalar'
 
 export const DEFAULT_MNEMONIC = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk';

@@ -14,7 +14,7 @@
   "author": "Unique Network dev team",
   "license": "MIT",
   "scripts": {
-    "build": "tsup src/index.ts --dts",
+    "build": "tsup src/sign.ts --dts",
     "test": "vitest",
     "testrun": "vitest run"
   },
@@ -39,6 +39,7 @@
   "dependencies": {
     "@noble/curves": "^0.7.1",
     "@noble/ed25519": "^1.7.3",
-    "@noble/hashes": "^1.2.0"
+    "@noble/hashes": "^1.2.0",
+    "base-x": "^4.0.0"
   }
 }

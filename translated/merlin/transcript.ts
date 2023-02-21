@@ -1,6 +1,6 @@
 import {Strobe128} from './strobe128'
 import {MERLIN_PROTOCOL_LABEL} from './constants'
-import {b} from './utils'
+import {b} from '../templateLiteralFunctions'
 import {randomBytes} from '@noble/hashes/utils'
 
 const encode_u64 = (x: bigint): Uint8Array => {

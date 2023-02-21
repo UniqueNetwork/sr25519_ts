@@ -1,8 +1,18 @@
 import {describe, test, expect} from 'vitest'
-import {getChainCode, parseUri, deriveHard, deriveSoft, parseUriAndDerive, parseUriAndDeriveAsync} from './uri'
-import {toHex} from '../merlin/utils'
+import {
+  getChainCode,
+  parseUri,
+  deriveHard,
+  deriveSoft,
+  parseUriAndDerive,
+  parseUriAndDeriveAsync,
+  DEFAULT_MNEMONIC
+} from './uri'
 import {Keypair} from '../../src/keypair'
 import {mnemonicToMiniSecret} from './mnemonic'
+import * as utilCrypto from '@polkadot/util-crypto'
+import {dangerouslyParseUriAndGetFullKeypair} from '../../src'
+import {uInt8ArrayToHex} from './bytes'
 
 const PHRASE = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk'
 
@@ -157,6 +167,30 @@ describe('derivation', async () => {
     expect(derivedKeypair.publicKey.key).toEqual(Uint8Array.from([64, 185, 103, 93, 249, 14, 250, 96, 105, 255, 98, 59, 15, 223, 207, 112, 108, 212, 124, 167, 69, 42, 80, 86, 199, 173, 88, 25, 77, 35, 68, 10]))
     expect(derivedKeypair.secretKey.key.bytes).toEqual(Uint8Array.from([81, 163, 64, 84, 147, 172, 216, 60, 75, 176, 212, 16, 43, 255, 149, 194, 180, 247, 53, 31, 207, 161, 207, 81, 26, 128, 110, 153, 201, 220, 120, 14]))
   })
+
+  test('hard derivation - comparing with polkadot', () => {
+    const miniSecretFromPolkadot = utilCrypto.mnemonicToMiniSecret(DEFAULT_MNEMONIC)
+    const keypairFromPolkadot = utilCrypto.sr25519PairFromSeed(miniSecretFromPolkadot)
+    const derivedFromPolkadot = utilCrypto.sr25519DeriveHard(keypairFromPolkadot, getChainCode('Alice'))
+
+    const derivedFromOurLib = dangerouslyParseUriAndGetFullKeypair(`//Alice`)
+
+    expect(derivedFromPolkadot.publicKey).toEqual(derivedFromOurLib.publicKey.key)
+    expect(derivedFromPolkadot.secretKey).toEqual(derivedFromOurLib.secretKey.ToBytes())
+  })
+
+  test('soft derivation - comparing with polkadot', () => {
+    const miniSecretFromPolkadot = utilCrypto.mnemonicToMiniSecret(DEFAULT_MNEMONIC)
+    const keypairFromPolkadot = utilCrypto.sr25519PairFromSeed(miniSecretFromPolkadot)
+    const derivedFromPolkadot = utilCrypto.sr25519DeriveSoft(keypairFromPolkadot, getChainCode('foo'))
+
+    const derivedFromOurLib = dangerouslyParseUriAndGetFullKeypair(`${DEFAULT_MNEMONIC}/foo`)
+
+    expect(derivedFromPolkadot.publicKey)
+      .toEqual(derivedFromOurLib.publicKey.key)
+    expect(derivedFromPolkadot.secretKey.slice(0,32))
+      .toEqual(derivedFromOurLib.secretKey.ToBytes().slice(0,32))
+  })
 })
 
 describe('uri', () => {
@@ -180,14 +214,14 @@ describe('uri', () => {
   test('parse uri and test derivations', () => {
     for (const {uri, pk} of sr25519TestData) {
       const keypair = parseUriAndDerive(uri)
-      expect(toHex(keypair.publicKey.key)).toEqual(pk)
+      expect(uInt8ArrayToHex(keypair.publicKey.key)).toEqual(pk)
     }
   })
 
   test('parse uri and test derivations - async', async () => {
     for (const {uri, pk} of sr25519TestData) {
       const keypair = await parseUriAndDeriveAsync(uri)
-      expect(toHex(keypair.publicKey.key)).toEqual(pk)
+      expect(uInt8ArrayToHex(keypair.publicKey.key)).toEqual(pk)
     }
   })
 })

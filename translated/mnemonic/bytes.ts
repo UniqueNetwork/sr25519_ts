@@ -40,6 +40,10 @@ export function isHex(value: unknown, bitLength = -1, ignoreLength?: boolean): b
   )
 }
 
+export const uInt8ArrayToHex = (bytes: Uint8Array | null): string => {
+  return !bytes ? '0x' : bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '0x')
+}
+
 export const hexStringToUint8Array = (str: string | null, bitLength: number = -1): Uint8Array => {
   if (!str) {
     return new Uint8Array()
@@ -70,7 +74,7 @@ export const hexStringToUint8Array = (str: string | null, bitLength: number = -1
   return new Uint8Array(bytes)
 }
 
-export function u8aConcatStrict (u8as: readonly Uint8Array[], length = 0): Uint8Array {
+export function u8aConcatStrict(u8as: readonly Uint8Array[], length = 0): Uint8Array {
   let offset = 0;
 
   if (!length) {
@@ -125,7 +129,7 @@ const compactToU8a = (value: bigint | number): Uint8Array => {
 
 }
 
-export function compactAddLength (input: Uint8Array): Uint8Array {
+export function compactAddLength(input: Uint8Array): Uint8Array {
   return u8aConcatStrict([
     compactToU8a(input.length),
     input

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest"
-import {bigIntToUint8Array, hexStringToUint8Array, toTwos} from './bytes'
+import {bigIntToUint8Array, hexStringToUint8Array, toTwos, uInt8ArrayToHex} from './bytes'
 import * as BN from 'bn.js'
 
 describe("bytes", () => {
@@ -21,6 +21,11 @@ describe("bytes", () => {
       const bn = new BN.BN(input.toString(10)).toTwos(256).toString(10)
       expect(result.toString(10)).toEqual(bn)
     }
+  })
+
+
+  test('Function uInt8ArrayToHex: Uint8Array to hex string', () => {
+    expect(uInt8ArrayToHex(new Uint8Array([0, 1, 2, 3]))).toEqual('0x00010203')
   })
 })
 

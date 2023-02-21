@@ -21,13 +21,3 @@ export const hex = (tmpl: TemplateStringsArray, ...values: any[]): Uint8Array =>
   }
   return new Uint8Array(str.match(/.{1,2}/g)!.map(b => parseInt(b, 16)))
 }
-
-/**
- * Converts a Uint8Array to a hex string
- * @param bytes Uint8Array to convert
- * @returns hex string
- * @example toHex(new Uint8Array([0, 1, 2, 3])) // '0x00010203'
- */
-export const toHex = (bytes: Uint8Array): string => {
-  return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '0x')
-}
