@@ -57,6 +57,10 @@ export class Transcript {
     )
   }
 
+  GetStrobe(): Strobe {
+    return this.obj.clone()
+  }
+
   Clone(): Transcript {
     const c = new Transcript()
     c.obj = this.obj.clone()

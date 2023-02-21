@@ -233,19 +233,19 @@ function MontgomeryReduce(limbs: bigint[]) {
   )
   const n4 = _part1(
     n3.i1 +
-      limbs[4] +
-      _m(n0.i0, BigInt(l[4])) +
-      _m(n2.i0, BigInt(l[2])) +
-      _m(n3.i0, BigInt(l[1]))
+    limbs[4] +
+    _m(n0.i0, BigInt(l[4])) +
+    _m(n2.i0, BigInt(l[2])) +
+    _m(n3.i0, BigInt(l[1]))
   )
 
   // limbs is divisible by R now, so we can divide by R by simply storing the upper half as the result
   const r0 = _part2(
     n4.i1 +
-      limbs[5] +
-      _m(n1.i0, BigInt(l[4])) +
-      _m(n3.i0, BigInt(l[2])) +
-      _m(n4.i0, BigInt(l[1]))
+    limbs[5] +
+    _m(n1.i0, BigInt(l[4])) +
+    _m(n3.i0, BigInt(l[2])) +
+    _m(n4.i0, BigInt(l[1]))
   )
   const r1 = _part2(
     r0.i1 + limbs[6] + _m(n2.i0, BigInt(l[4])) + _m(n4.i0, BigInt(l[2]))
@@ -366,6 +366,19 @@ function topHalf(x: number) {
   return (x >> 4) & 15
 }
 
+export function readUint8ArrayIntoBigIntArray(bytes: Uint8Array): bigint[] {
+  const bigInts: bigint[] = [];
+  for (let i = 0; i < bytes.length; i += 8) {
+    let num: bigint = 0n;
+    for (let j = i + 7; j >= i; j--) {
+      num = (num << 8n) | BigInt(bytes[j]);
+    }
+    bigInts.push(num);
+  }
+  return bigInts;
+}
+
+
 export class Scalar {
   public bytes: Uint8Array
 
@@ -388,8 +401,13 @@ export class Scalar {
     return s
   }
 
+  ToBytes(): Uint8Array {
+    return this.bytes.slice()
+  }
+
   static FromBytesModOrderWide(data: Uint8Array): Uint8Array {
     const tt1 = FromBytesWide(data)
+    //todo: replace return type with Scalar
     return Pack(tt1)
   }
 
@@ -447,36 +465,37 @@ export class Scalar {
     return res
   }
 
+
   // sbyte[]
   NonAdjacentForm(size: number): number[] {
     // sbyte[] naf = new sbyte[256];
-    const naf = new Array(256)
+    const naf: number[] = new Array(256).fill(0)
 
-    const xU64 = this.bytes // Scalar52.GetU64Data(ScalarBytes);
+    const decoded_xU64 = readUint8ArrayIntoBigIntArray(this.ToBytes())
+    const xU64: bigint[] = [...decoded_xU64, ...new Array(5 - decoded_xU64.length).fill(0n)]
 
-    const width = 1 << size
-    const windowMask = width - 1
+    const width = 1n << BigInt(size)
+    const windowMask = width - 1n
 
     let pos = 0
-    let carry = 0
+    let carry = 0n
     while (pos < 256) {
       // Construct a buffer of bits of the scalar, starting at bit `pos`
-      const u64_idx = pos / 64
+      const u64_idx = Math.floor(pos / 64)
       const bit_idx = pos % 64
-      let bit_buf
+      let bit_buf: bigint
       if (bit_idx < 64 - size) {
         // This window's bits are contained in a single u64
-        bit_buf = xU64[u64_idx] >> bit_idx
+        bit_buf = xU64[Number(u64_idx)] >> BigInt(bit_idx)
       } else {
         // Combine the current u64's bits with the bits from the next u64
-        bit_buf =
-          (xU64[u64_idx] >> bit_idx) | (xU64[1 + u64_idx] << (64 - bit_idx))
+        bit_buf = (xU64[u64_idx] >> BigInt(bit_idx)) | (xU64[u64_idx + 1] << BigInt(64 - bit_idx))
       }
 
       // Add the carry into the current window
-      const window = carry + (bit_buf & windowMask)
+      const window: bigint = carry + (bit_buf & windowMask)
 
-      if ((window & 1) === 0) {
+      if ((window & 1n) === 0n) {
         // If the window value is even, preserve the carry and continue.
         // Why is the carry preserved?
         // If carry === 0 and window & 1 === 0, then the next carry should be 0
@@ -485,12 +504,13 @@ export class Scalar {
         continue
       }
 
-      if (window < width / 2) {
-        carry = 0
-        naf[pos] = window
+      if (window < width / 2n) {
+        carry = 0n
+        naf[pos] = Number(window)
       } else {
-        carry = 1
-        naf[pos] = window - width
+        carry = 1n
+        //naf[pos] = (window as i8).wrapping_sub(width as i8);
+        naf[pos] = Number(window - width)
       }
 
       pos += size

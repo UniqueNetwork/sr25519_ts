@@ -1,13 +1,14 @@
-import { FieldElement, SQRT_M1 } from './fieldElement'
-import { type Scalar } from './scalar'
-import { type EdwardsBasepointTable } from './edwardsBasepointTable'
-import { type EdwardsPoint } from './edwardsPoint'
-import { ProjectivePoint } from './projectivePoint'
-import { NafLookupTable } from './nafLookupTable'
+import {FieldElement, SQRT_M1} from './fieldElement'
+import {type Scalar} from './scalar'
+import {type EdwardsBasepointTable} from './edwardsBasepointTable'
+import {EdwardsPoint} from './edwardsPoint'
+import {ProjectivePoint} from './projectivePoint'
+import {NafLookupTable} from './nafLookupTable'
 import {
   AFFINE_ODD_MULTIPLES_OF_BASEPOINT,
   ED25519_BASEPOINT_TABLE_INNER
 } from './tables'
+import {formatNumbers} from '../translated/mnemonic/testUtils'
 
 export const INVSQRT_A_MINUS_D = new FieldElement([
   278908739862762n,
@@ -18,29 +19,27 @@ export const INVSQRT_A_MINUS_D = new FieldElement([
 ])
 
 export class CompressedRistretto {
-  public compressedRistrettoBytes: Uint8Array
+  public bytes: Uint8Array
 
-  CompressedRistretto (data: Uint8Array) {
-    this.compressedRistrettoBytes = data
+  static FromBytes(data: Uint8Array): CompressedRistretto {
+    const compressedRistretto = new CompressedRistretto()
+    compressedRistretto.bytes = data
+    return compressedRistretto
   }
 
-  ToBytes (): Uint8Array {
-    return this.compressedRistrettoBytes
-  }
-
-  GetBytes (): Uint8Array {
-    return this.compressedRistrettoBytes
+  ToBytes(): Uint8Array {
+    return this.bytes.slice()
   }
 }
 
 export class RistrettoBasepointTable {
   public edwardsBasepointTable: EdwardsBasepointTable
 
-  public constructor () {
+  public constructor() {
     this.edwardsBasepointTable = ED25519_BASEPOINT_TABLE_INNER
   }
 
-  Mul (s: Scalar): RistrettoPoint {
+  Mul(s: Scalar): RistrettoPoint {
     const ep = this.edwardsBasepointTable.Mul(s)
 
     return new RistrettoPoint(ep)
@@ -50,19 +49,43 @@ export class RistrettoBasepointTable {
 export class RistrettoPoint {
   public Ep: EdwardsPoint
 
-  public constructor (ep: EdwardsPoint) {
+  public constructor(ep: EdwardsPoint) {
     this.Ep = ep
+  }
+
+  static FromCompressedPoint(compressed: CompressedRistretto): RistrettoPoint {
+    const bytes = compressed.ToBytes()
+    const ep = EdwardsPoint.FromCompressedPoint(bytes.slice())
+    return new RistrettoPoint(ep)
+  }
+
+  static FromCompressedPointBytes(bytes: Uint8Array): RistrettoPoint {
+    const ep = EdwardsPoint.FromCompressedPoint(bytes.slice())
+    return new RistrettoPoint(ep)
+  }
+
+  Negate(): RistrettoPoint {
+    const ep = this.Ep.Negate()
+    return new RistrettoPoint(ep)
   }
 
   /// Compute \\(aA + bB\\) in letiable time, where \\(B\\) is the
   /// Ristretto basepoint.
-  static lettimeDoubleScalarMulBasepoint (
+  static vartimeDoubleScalarMulBasepoint(
     a: Scalar,
     A: EdwardsPoint,
     b: Scalar
   ): EdwardsPoint {
+
+    // console.log('a is ok', a.bytes.toString() === `47,22,65,197,127,131,55,10,206,175,12,199,162,219,233,169,198,195,156,216,106,174,24,128,229,162,23,37,178,131,78,5`)
+    // console.log('b is ok', b.bytes.toString() === `73,169,253,171,114,135,149,240,248,209,238,64,225,244,19,87,70,53,221,245,134,0,153,2,119,98,93,49,221,3,16,3`)
+
     const aNaf = a.NonAdjacentForm(5)
+    // console.log('a naf is ok', aNaf.toString() === '15,0,0,0,0,-15,0,0,0,0,0,3,0,0,0,0,1,0,0,0,0,0,-11,0,0,0,0,-7,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,15,0,0,0,0,3,0,0,0,0,5,0,0,0,0,0,0,0,7,0,0,0,0,-1,0,0,0,0,0,11,0,0,0,0,0,3,0,0,0,0,0,7,0,0,0,0,0,11,0,0,0,0,0,0,-3,0,0,0,0,-9,0,0,0,0,0,0,-11,0,0,0,0,0,0,0,-11,0,0,0,0,-5,0,0,0,0,-7,0,0,0,0,0,0,-15,0,0,0,0,0,-3,0,0,0,0,5,0,0,0,0,0,-5,0,0,0,0,11,0,0,0,0,-13,0,0,0,0,0,0,11,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,0,0,-9,0,0,0,0,9,0,0,0,0,15,0,0,0,0,-15,0,0,0,0,-13,0,0,0,0,9,0,0,0,0,0,-5,0,0,0,0,0,1,0,0,0,0,-3,0,0,0,0,-11,0,0,0,0,3,0,0,0,0,0,0')
+
     const bNaf = b.NonAdjacentForm(8)
+    // console.log('b naf is ok', bNaf.toString() === '73,0,0,0,0,0,0,0,-87,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,-85,0,0,0,0,0,0,0,-35,0,0,0,0,0,0,0,0,-79,0,0,0,0,0,0,0,19,0,0,0,0,0,0,0,0,-113,0,0,0,0,0,0,0,0,0,0,0,0,105,0,0,0,0,0,0,0,119,0,0,0,0,0,0,0,0,0,0,0,0,-123,0,0,0,0,0,0,0,0,0,-11,0,0,0,0,0,0,0,0,0,-59,0,0,0,0,0,0,0,0,-53,0,0,0,0,0,0,0,-87,0,0,0,0,0,0,0,-89,0,0,0,0,0,0,0,0,0,-81,0,0,0,0,0,0,0,0,0,0,-121,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,-103,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,119,0,0,0,0,0,0,0,0,-79,0,0,0,0,0,0,0,-81,0,0,0,0,0,0,0,-103,0,0,0,0,0,0,0,-17,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,49,0,0,0,0,0,0,0,0,0,0,0')
+
     let i = 0
 
     /// Find starting index
@@ -114,7 +137,7 @@ export class RistrettoPoint {
   }
 
   /// Compress this point using the Ristretto encoding.
-  Compress (): CompressedRistretto {
+  Compress(): CompressedRistretto {
     const X = this.Ep.X
     const Y = this.Ep.Y
     const Z = this.Ep.Z
@@ -147,8 +170,7 @@ export class RistrettoPoint {
     const s_is_negative = s.IsNegative()
     s.ConditionalNegate(s_is_negative)
 
-    const res = new CompressedRistretto()
-    res.compressedRistrettoBytes = s.ToBytes()
+    const res = CompressedRistretto.FromBytes(s.ToBytes())
 
     return res
   }

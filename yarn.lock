@@ -287,18 +287,6 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@noble/curves@^0.7.1":
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-0.7.1.tgz#d6068a123a0f16c04b726a73b112a389adcac0c5"
-  integrity sha512-dodwTK3H/0h8BY59J6RxHLC12JPXxmbZUiX5LNX8PjmShcHQXCXaIvXnSXJpFPzAN08SKd8rTrLrzLLNiwU90g==
-  dependencies:
-    "@noble/hashes" "1.2.0"
-
-"@noble/ed25519@^1.7.3":
-  version "1.7.3"
-  resolved "https://registry.yarnpkg.com/@noble/ed25519/-/ed25519-1.7.3.tgz#57e1677bf6885354b466c38e2b620c62f45a7123"
-  integrity sha512-iR8GBkDt0Q3GyaVcIu7mSsVIqnFbkbRzGLWlvhwunacoLwt4J3swfKhfaM6rN6WY+TBGoYT1GtT1mIh2/jGbRQ==
-
 "@noble/hashes@1.2.0", "@noble/hashes@^1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.2.0.tgz#a3150eeb09cc7ab207ebf6d7b9ad311a9bdbed12"

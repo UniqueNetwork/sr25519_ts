@@ -1,17 +1,15 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import {describe, test, expect, beforeAll} from 'vitest'
 
-import * as polkadotUtilCrypto from "@polkadot/util-crypto"
+import * as polkadotUtilCrypto from '@polkadot/util-crypto'
 
-import { Sr25519 } from "../src/sign"
-import {SecretKey} from '../src/signingContext'
 import {Keypair} from '../src/keypair'
 
 beforeAll(async () => {
   await polkadotUtilCrypto.cryptoWaitReady()
 })
 
-describe("main", async () => {
-  test("sign with random keys", async () => {
+describe('main', async () => {
+  test('sign with random keys', async () => {
     // test message: 'abc'
     const message = Uint8Array.from([97, 98, 99])
 
@@ -37,7 +35,7 @@ describe("main", async () => {
 
     const keypair = Keypair.FromSecretKeyBytes(secretKey)
 
-    const signature = Sr25519.sign(message, keypair)
+    const signature = keypair.secretKey.sign(message, keypair.publicKey).ToBytes()
     const isValid = polkadotUtilCrypto.sr25519Verify(
       message,
       signature,
@@ -46,7 +44,7 @@ describe("main", async () => {
     expect(isValid).toBe(true)
   })
 
-  test("sign with old keys", async () => {
+  test('sign with old keys', async () => {
     // test message: 'abc'
     const message = Uint8Array.from([97, 98, 99])
 
@@ -77,16 +75,9 @@ describe("main", async () => {
     expect(controlIsValid).toBe(true)
 
     const keypair = Keypair.FromSecretKeyBytes(secretKey)
-    const signature = Sr25519.sign(message, keypair)
-    const isValid = polkadotUtilCrypto.sr25519Verify(
-      message,
-      signature,
-      publicKey
-    )
+    const signature = keypair.secretKey.sign(message, keypair.publicKey).ToBytes()
 
-    expect(isValid).toBe(true)
-
-    //todo: fix verify
-    // expect(Sr25519.verify(message, signature, publicKey)).toBe(true)
+    expect(polkadotUtilCrypto.sr25519Verify(message, signature, publicKey)).toBe(true)
+    expect(keypair.publicKey.verify(message, signature)).toBe(true)
   })
 })

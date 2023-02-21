@@ -1,4 +1,5 @@
 import type {Transcript} from '../merlin/transcript'
+import type {Transcript as TranscriptMax} from '../../src/external/merlin'
 
 export const formatNumbers = (numbers: number[] | Uint8Array): string => {
   let output = '';
@@ -16,4 +17,12 @@ export const printTranscript = (transcript: Transcript) => {
   console.log('pos', strobe.pos)
   console.log('pos_begin', strobe.pos_begin)
   console.log('cur_flags', strobe.cur_flags)
+}
+
+export const printTranscriptMax = (transcript: TranscriptMax) => {
+  const strobe = transcript.GetStrobe()
+  console.log('state', formatNumbers(strobe.state))
+  console.log('pos', strobe.pos)
+  console.log('pos_begin', strobe.posBegin)
+  console.log('cur_flags', strobe.curFlags)
 }

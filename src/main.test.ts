@@ -1,8 +1,8 @@
 import {describe, test, expect, beforeAll} from 'vitest'
 
-import {dangerouslyParseUriAndGetFullKeypair, getAccount} from './index'
+import {getAccount, utils} from './index'
 import {encodeSubstrateAddress} from './address'
-import {b} from '../translated/templateLiteralFunctions'
+import {b, hex} from '../translated/templateLiteralFunctions'
 import {DEFAULT_MNEMONIC} from '../translated/mnemonic/uri'
 import * as utilCrypto from '@polkadot/util-crypto'
 import {mnemonicToMiniSecret} from '../translated/mnemonic/mnemonic'
@@ -45,7 +45,7 @@ describe('main test', async () => {
     expect(miniSecretFromPolkadot).toEqual(miniSecretFromOurLib)
 
     const keypairFromPolkadot = utilCrypto.sr25519PairFromSeed(miniSecretFromPolkadot)
-    const keypairFromOurLib = dangerouslyParseUriAndGetFullKeypair(DEFAULT_MNEMONIC)
+    const keypairFromOurLib = utils.dangerouslyParseUriAndGetFullKeypair(DEFAULT_MNEMONIC)
 
     expect(keypairFromPolkadot.publicKey).toEqual(keypairFromOurLib.publicKey.key)
     expect(keypairFromPolkadot.secretKey).toEqual(keypairFromOurLib.secretKey.ToBytes())
@@ -77,7 +77,7 @@ describe('main test', async () => {
   })
 
   test('verify', () => {
-    const keypair = dangerouslyParseUriAndGetFullKeypair(Alice.uri)
+    const keypair = utils.dangerouslyParseUriAndGetFullKeypair(Alice.uri)
     const account = getAccount(Alice.uri)
     const publicKey = account.publicKey
 
@@ -95,9 +95,32 @@ describe('main test', async () => {
     const isValidWithPolkadotVerifier = utilCrypto.sr25519Verify(message, signature, publicKey)
     expect(isValidWithPolkadotVerifier).toBe(true)
 
-    //todo: fix verify
     const isValidWithOurVerifier = account.verify(message, signature)
-    // console.log(isValidWithPolkadotVerifier)
+    expect(isValidWithOurVerifier).toBe(true)
+  })
+
+  test('verify quick test', () => {
+    const account = getAccount(Alice.uri)
+    const message = b`abc`
+    const signature = hex`8204a21d35c2e09ad44908b9835aea2a224944fa67ccfa3c69999aa03fe2882049a9fdab728795f0f8d1ee40e1f413574635ddf58600990277625d31dd031083`
+
+    expect(utilCrypto.sr25519Verify(message, signature, account.publicKey)).toBe(true)
+    expect(account.verify(message, signature)).toBe(true)
+  })
+
+  test('verify quick test - negative', () => {
+    const account = getAccount(Alice.uri)
+    const message = b`abd`
+    const signature = hex`8204a21d35c2e09ad44908b9835aea2a224944fa67ccfa3c69999aa03fe2882049a9fdab728795f0f8d1ee40e1f413574635ddf58600990277625d31dd031083`
+
+    expect(utilCrypto.sr25519Verify(message, signature, account.publicKey)).toBe(false)
+    expect(account.verify(message, signature)).toBe(false)
+
+    message[2] = 0x63   // abd -> abc
+    signature[1] = 0x23 // just mangle the signature
+
+    expect(utilCrypto.sr25519Verify(message, signature, account.publicKey)).toBe(false)
+    expect(account.verify(message, signature)).toBe(false)
   })
 })
 

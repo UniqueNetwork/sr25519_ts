@@ -63,14 +63,14 @@ describe('mini secret', async () => {
     const miniSecret = await mnemonicToMiniSecretAsync(PHRASE, 'password')
     expect(miniSecret).toEqual(miniSecretForPhraseWithPassword)
   })
-})
 
-describe('keypair', () => {
-  const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecret(PHRASE))
+  test('keypair - from mini secret', () => {
+    const keypair = Keypair.FromMiniSecret(mnemonicToMiniSecret(PHRASE))
 
-  expect(keypair.publicKey.key).toEqual(FOR_PHRASE.publicKey)
-  expect(keypair.secretKey.getInConcatenatedForm()).toEqual(FOR_PHRASE.secretKeyWithNonce)
-  expect(keypair.secretKey.key.bytes).toEqual(FOR_PHRASE.secretKey)
+    expect(keypair.publicKey.key).toEqual(FOR_PHRASE.publicKey)
+    expect(keypair.secretKey.getInConcatenatedForm()).toEqual(FOR_PHRASE.secretKeyWithNonce)
+    expect(keypair.secretKey.key.bytes).toEqual(FOR_PHRASE.secretKey)
 
-  expect(keypair.ToBytes()).toEqual(FOR_PHRASE.full)
+    expect(keypair.ToBytes()).toEqual(FOR_PHRASE.full)
+  })
 })

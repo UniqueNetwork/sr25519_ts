@@ -7,9 +7,10 @@ import {
   ScalarBigintToBytesForm,
   ScalarBytesToBigintForm,
 } from './scalar'
-import {RistrettoBasepointTable, RistrettoPoint} from './ristretto'
+import {CompressedRistretto, RistrettoBasepointTable, RistrettoPoint} from './ristretto'
 import {EdwardsPoint} from './edwardsPoint'
 import {sha512} from '@noble/hashes/sha512'
+import {printTranscriptMax} from '../translated/mnemonic/testUtils'
 
 interface ISigningContext {
   BytesClone: (data: Uint8Array) => Transcript
@@ -97,6 +98,50 @@ export class SecretKey {
 
     return publicKey
   }
+
+  sign(
+    message: Uint8Array,
+    publicKey: PublicKey,
+    rng: RandomGenerator = new RandomGenerator()
+  ): Signature {
+    const signingContext = new SigningContext085(textEncoder.encode("substrate"))
+
+    const st = new SigningTranscript(signingContext)
+
+    signingContext.Bytes(message)
+
+    st.SetProtocolName(textEncoder.encode('Schnorr-sig'))
+    st.CommitPointBytes(textEncoder.encode('sign:pk'), publicKey.ToBytes())
+
+    const r = st.WitnessScalarLabel(
+      textEncoder.encode('signing'),
+      this.nonce,
+      rng
+    )
+    const sc = new Scalar()
+    sc.bytes = r
+
+    const tbl = new RistrettoBasepointTable()
+    const R = tbl.Mul(sc).Compress()
+
+    st.CommitPoint(textEncoder.encode('sign:R'), R)
+
+    const k = st.ChallengeScalar(textEncoder.encode('sign:c')) // context, message, A/public_key, R=rG
+    const scalar = ScalarAdd(
+      ScalarMul(
+        ScalarBytesToBigintForm(k),
+        ScalarBytesToBigintForm(this.key.ToBytes())
+      ),
+      ScalarBytesToBigintForm(r)
+    )
+
+    const sig = Signature.FromCompressedRistrettoAndScalar(
+      R,
+      Scalar.FromBytes(ScalarBigintToBytesForm(scalar))
+    )
+
+    return sig
+  }
 }
 
 export class PublicKey {
@@ -108,6 +153,48 @@ export class PublicKey {
     publicKey.key = bytes
 
     return publicKey
+  }
+
+  ToBytes(): Uint8Array {
+    return this.key.slice()
+  }
+
+  ToRistrettoPoint(): RistrettoPoint {
+    return RistrettoPoint.FromCompressedPointBytes(this.key)
+  }
+
+  verify(message: Uint8Array, signatureBytes: Uint8Array): boolean {
+    let signingTranscript = new SigningContext085(textEncoder.encode("substrate")).BytesClone(message)
+
+    const signature = Signature.FromBytes(signatureBytes)
+
+    // console.log(printTranscriptMax(signingTranscript))
+    // console.log("signature.R", signature.R)
+    // console.log("signature.S", signature.S)
+
+    signingTranscript.AppendMessage(textEncoder.encode('proto-name'), textEncoder.encode('Schnorr-sig'))
+    signingTranscript.AppendMessage(textEncoder.encode('sign:pk'), this.key)
+    signingTranscript.AppendMessage(textEncoder.encode('sign:R'), signature.R.ToBytes())
+
+    const k = Scalar.FromBytes(Scalar.FromBytesModOrderWide(
+      signingTranscript.ChallengeBytes(textEncoder.encode('sign:c'), 64)
+    ))
+
+    // printTranscriptMax(signingTranscript)
+    // console.log("k", k)
+
+    const A = this.ToRistrettoPoint()
+    const negA = A.Negate()
+
+    // console.log('negA', negA.Ep)
+
+    const R = RistrettoPoint.vartimeDoubleScalarMulBasepoint(
+      k,
+      negA.Ep,
+      signature.S
+    )
+    const compressed = new RistrettoPoint(R).Compress()
+    return isUint8ArrayEqual(compressed.ToBytes(), signature.R.ToBytes())
   }
 }
 
@@ -125,29 +212,46 @@ export class RandomGenerator {
 }
 
 class Signature {
-  public R: Uint8Array
-  public S: Uint8Array
+  public R: CompressedRistretto
+  public S: Scalar
 
-  FromBytes(bytes: Uint8Array) {
-    this.R = new Uint8Array(32)
-    this.S = new Uint8Array(32)
+  static FromBytes(bytes: Uint8Array) {
+    const signature = new Signature()
+    if (bytes.length !== 64) {
+      throw new Error(`Invalid signature length`)
+    }
 
-    this.R.set(bytes.slice(0, 32))
-    this.S.set(bytes.slice(32, 64))
+    const lower = bytes.slice(0, 32)
+    const upper = bytes.slice(32, 64)
+    if ((upper[31] & 128) === 0) {
+      throw new Error(`Invalid signature`)
+    }
+    upper[31] &= 127
+
+
+    signature.R = CompressedRistretto.FromBytes(lower)
+
+    //todo: proper check scalar and reduce it if necessary
+    signature.S = Scalar.FromBytes(upper)
+
+    return signature
+  }
+
+  static FromCompressedRistrettoAndScalar(R: CompressedRistretto, S: Scalar): Signature {
+    const signature = new Signature()
+    signature.R = R
+    signature.S = S
+    return signature
   }
 
   ToBytes() {
-    const mergedArray = new Uint8Array(this.R.length + this.S.length)
-    mergedArray.set(this.R)
-    mergedArray.set(this.S, this.R.length)
+    const compressedRistrettoBytes = this.R.ToBytes()
+    const scalarBytes = this.S.ToBytes()
+    const mergedArray = new Uint8Array(compressedRistrettoBytes.length + scalarBytes.length)
+    mergedArray.set(compressedRistrettoBytes)
+    mergedArray.set(scalarBytes, compressedRistrettoBytes.length)
     mergedArray[63] |= 128
     return mergedArray
-  }
-}
-
-class CompressedRistretto {
-  ToBytes(): Uint8Array {
-    return new Uint8Array(2)
   }
 }
 
@@ -267,72 +371,5 @@ export class SigningContext085 implements ISigningContext {
 
   GetTranscript(): Transcript {
     return this.ts
-  }
-
-  verify(
-    st: SigningTranscript,
-    signature: Uint8Array,
-    publicKey: PublicKey
-  ): boolean {
-    const sig = new Signature()
-    sig.FromBytes(signature)
-
-    st.SetProtocolName(textEncoder.encode('Schnorr-sig'))
-    st.CommitPointBytes(textEncoder.encode('sign:pk'), publicKey.key)
-    st.CommitPointBytes(textEncoder.encode('sign:R'), sig.R)
-
-    const k = st.ChallengeScalar(textEncoder.encode('sign:c')) // context, message, A/public_key, R=rG
-
-    const A = EdwardsPoint.Decompress(publicKey.key)
-    const negA = A.Negate()
-
-    const R = RistrettoPoint.lettimeDoubleScalarMulBasepoint(
-      Scalar.FromBytes(k),
-      negA,
-      Scalar.FromBytes(sig.S)
-    )
-
-    const expected = new RistrettoPoint(R).Compress().ToBytes()
-
-    return isUint8ArrayEqual(sig.R, expected)
-  }
-
-  // public static Signature
-  sign(
-    st: SigningTranscript,
-    secretKey: SecretKey,
-    publicKey: PublicKey,
-    rng: RandomGenerator
-  ): Signature {
-    st.SetProtocolName(textEncoder.encode('Schnorr-sig'))
-    st.CommitPointBytes(textEncoder.encode('sign:pk'), publicKey.key)
-
-    const r = st.WitnessScalarLabel(
-      textEncoder.encode('signing'),
-      secretKey.nonce,
-      rng
-    )
-    const sc = new Scalar()
-    sc.bytes = r
-
-    const tbl = new RistrettoBasepointTable()
-    const R = tbl.Mul(sc).Compress()
-
-    st.CommitPoint(textEncoder.encode('sign:R'), R)
-
-    const k = st.ChallengeScalar(textEncoder.encode('sign:c')) // context, message, A/public_key, R=rG
-    const scalar = ScalarAdd(
-      ScalarMul(
-        ScalarBytesToBigintForm(k),
-        ScalarBytesToBigintForm(secretKey.key.bytes)
-      ),
-      ScalarBytesToBigintForm(r)
-    )
-
-    const sig = new Signature()
-    sig.R = R.ToBytes()
-    sig.S = ScalarBigintToBytesForm(scalar)
-
-    return sig
   }
 }

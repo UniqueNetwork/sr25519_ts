@@ -72,8 +72,12 @@ export class EdwardsPoint {
     return ep
   }
 
-  static Decompress (bytes: Uint8Array): EdwardsPoint {
+  static FromCompressedPoint(bytes: Uint8Array): EdwardsPoint {
     const s = FieldElement.FromBytes(bytes)
+
+    if (s.IsNegative()) {
+      throw new Error(`Compressed point decompression error: s is negative`)
+    }
 
     // Step 2.  Compute (X:Y:Z:T).
     const one = FieldElement.One()
@@ -96,7 +100,6 @@ export class EdwardsPoint {
     const x = s.Add(s).Mul(Dx)
     const x_neg = x.IsNegative()
     x.ConditionalNegate(x_neg)
-
     // y === (1-as²)/(1+as²)
     const y = u1.Mul(Dy)
 
