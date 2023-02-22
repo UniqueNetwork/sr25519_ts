@@ -1,8 +1,14 @@
 {
-  "name": "sr25519_ts",
+  "name": "@unique-nft/sr25519",
   "version": "0.0.1",
   "description": "Pure Typescript sr25519 implementation",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/UniqueNetwork/sr25519_ts"
