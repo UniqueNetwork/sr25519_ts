@@ -1,6 +1,6 @@
 {
   "name": "sr25519_ts",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Pure Typescript sr25519 implementation",
   "main": "dist/index.js",
   "repository": {
@@ -14,7 +14,9 @@
   "author": "Unique Network dev team",
   "license": "MIT",
   "scripts": {
-    "build": "tsup src/index.ts --dts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "rimraf dist && tsup",
     "test": "vitest",
     "testrun": "vitest run"
   },
@@ -24,19 +26,21 @@
   "devDependencies": {
     "@polkadot/util-crypto": "^10.2.1",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "bn.js": "^5.2.1",
     "eslint": "^8.0.1",
     "eslint-config-standard-with-typescript": "^34.0.0",
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "prettier": "^2.8.4",
+    "rimraf": "^4.1.2",
     "tsup": "^6.5.0",
     "tsx": "^3.12.1",
-    "typescript": "*",
+    "typescript": "^4.9.5",
     "vitest": "^0.25.5"
   },
   "dependencies": {
-    "@noble/curves": "^0.7.1",
-    "@noble/hashes": "^1.2.0"
+    "@noble/hashes": "^1.2.0",
+    "base-x": "^4.0.0"
   }
 }

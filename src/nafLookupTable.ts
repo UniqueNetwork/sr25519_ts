@@ -1,12 +1,12 @@
-import { type ProjectiveNielsPoint } from './projectiveNielsPoint'
-import { type LookupTable } from './edwardsBasepointTable'
-import { type AffineNielsPoint } from './affineNielsPoint'
-import { EdwardsPoint } from './edwardsPoint'
+import type {ProjectiveNielsPoint} from './projectiveNielsPoint'
+import type {LookupTable} from './edwardsBasepointTable'
+import type {AffineNielsPoint} from './affineNielsPoint'
+import {EdwardsPoint} from './edwardsPoint'
 
 export class NafLookupTable5PNP {
   public Pnp: ProjectiveNielsPoint[]
 
-  Select (v: number): ProjectiveNielsPoint {
+  Select(v: number): ProjectiveNielsPoint {
     return this.Pnp[v / 2]
   }
 }
@@ -14,15 +14,15 @@ export class NafLookupTable5PNP {
 export class NafLookupTable {
   public lookupTable: LookupTable
 
-  public NafLookupTable (lookupTable: LookupTable) {
+  public NafLookupTable(lookupTable: LookupTable) {
     this.lookupTable = lookupTable
   }
 
-  Select (v: number): AffineNielsPoint {
+  Select(v: number): AffineNielsPoint {
     return this.lookupTable.affineNielsPoints[v / 2]
   }
 
-  static FromEdwardsPoint (points: EdwardsPoint): NafLookupTable5PNP {
+  static FromEdwardsPoint(points: EdwardsPoint): NafLookupTable5PNP {
     const Ai: ProjectiveNielsPoint[] = new Array(8)
 
     for (let i = 0; i < 8; i++) {

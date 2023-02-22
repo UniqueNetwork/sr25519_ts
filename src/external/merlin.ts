@@ -1,5 +1,7 @@
-import { Strobe, Operation, operationToFlagMap } from "./strobe"
-import { type RandomGenerator } from "../signingContext"
+import {Strobe, Operation, operationToFlagMap} from './strobe'
+import {RandomGenerator} from '../signingContext'
+
+const textEncoder = new TextEncoder()
 
 export function getBytesU32(num: number): Uint8Array {
   const r = new Uint8Array(4)
@@ -19,7 +21,7 @@ class TranscriptRngBuilder {
 
   RekeyWithWitnessBytes(
     label: Uint8Array,
-    witness: Uint8Array
+    witness: Uint8Array,
   ): TranscriptRngBuilder {
     this.strobe.MetaAd(label, false)
     this.strobe.MetaAd(getBytesU32(witness.length), true)
@@ -33,7 +35,7 @@ class TranscriptRngBuilder {
     const bytes = rng.GetRandomArrayU8_32()
 
     const newStrobe = this.strobe.Clone()
-    newStrobe.MetaAd(Buffer.from("rng", "ascii"), false)
+    newStrobe.MetaAd(textEncoder.encode('rng'), false)
     newStrobe.Key(bytes, false)
 
     return newStrobe
@@ -42,7 +44,7 @@ class TranscriptRngBuilder {
 
 export class Transcript {
   obj: Strobe
-  MERLIN_PROTOCOL_LABEL = "Merlin v1.0"
+  MERLIN_PROTOCOL_LABEL = 'Merlin v1.0'
 
   Init(label: string) {
     // strobe_init();
@@ -50,9 +52,13 @@ export class Transcript {
     this.obj.strobe_init(this.MERLIN_PROTOCOL_LABEL)
 
     this.AppendMessage(
-      Buffer.from("dom-sep", "ascii"),
-      Buffer.from(label, "ascii")
+      textEncoder.encode('dom-sep'),
+      textEncoder.encode(label),
     )
+  }
+
+  GetStrobe(): Strobe {
+    return this.obj.clone()
   }
 
   Clone(): Transcript {
@@ -75,7 +81,7 @@ export class Transcript {
       0,
       data.length,
       0,
-      more
+      more,
     )
     if (error !== null) {
       // throw new ApplicationException($"{error}");
@@ -90,14 +96,14 @@ export class Transcript {
       0,
       data.length,
       0,
-      more
+      more,
     )
     if (error !== null) {
       // throw new ApplicationException($"{error}");
     }
   }
 
-  Prf(expectedOutput: number, more: boolean): Uint8Array | null {
+  Prf(expectedOutput: number, more: boolean): Uint8Array {
     const ed = new Uint8Array(0)
     const result = this.obj.operate(
       false,
@@ -106,10 +112,10 @@ export class Transcript {
       0,
       0,
       expectedOutput,
-      more
+      more,
     )
     if (result === null) {
-      // throw new ApplicationException($"{result}");
+      throw new Error('Error in Prf: result is null')
     }
 
     return result
@@ -123,7 +129,7 @@ export class Transcript {
       0,
       data.length,
       0,
-      more
+      more,
     )
     if (error !== null) {
       // throw new Exception($"{error}");
@@ -145,7 +151,7 @@ export class Transcript {
   WitnessBytes(
     label: Uint8Array,
     nonceSeeds: Uint8Array,
-    rng: RandomGenerator
+    rng: RandomGenerator,
   ): Transcript {
     const ns = new Array<Uint8Array>(1)
     ns[0] = nonceSeeds
@@ -155,7 +161,7 @@ export class Transcript {
   WitnessBytesRngL(
     label: Uint8Array,
     nonce_seeds: Uint8Array[],
-    rng: RandomGenerator
+    rng: RandomGenerator,
   ): Transcript {
     let br = this.BuildRng()
     nonce_seeds.forEach((ns) => {
@@ -165,7 +171,28 @@ export class Transcript {
     return br.Finalize(rng)
   }
 
+  WitnessBytesHdkd(
+    label: Uint8Array, dest_len: number, nonce_seeds: Uint8Array[],
+  ): Uint8Array {
+    const dest = new Uint8Array(dest_len)
+
+    let br = this.BuildRng()
+    for (const ns of nonce_seeds) {
+      br = br.RekeyWithWitnessBytes(label, ns)
+    }
+    const r = br.Finalize(new RandomGenerator())
+    r.FillBytes(dest)
+
+    return dest
+  }
+
   BuildRng(): TranscriptRngBuilder {
     return new TranscriptRngBuilder(this.Clone())
+  }
+
+  FillBytes(dest: Uint8Array) {
+    const data_len = getBytesU32(dest.length)
+    this.MetaAd(data_len, false)
+    this.Prf(dest.length, false)
   }
 }

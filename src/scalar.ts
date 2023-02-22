@@ -1,5 +1,3 @@
-import { Keccak } from "./external/keccakf1600"
-
 export const LFACTOR = 0x51da312547e1b
 export const L = BigUint64Array.from([
   0x0002631a5cf5d3edn,
@@ -154,7 +152,7 @@ function WrappingSub(a: bigint, b: bigint): bigint {
 
 export function ScalarSub(
   a: BigUint64Array,
-  b: BigUint64Array
+  b: BigUint64Array,
 ): BigUint64Array {
   const difference = new BigUint64Array(5)
   const mask: bigint = (1n << 52n) - 1n
@@ -179,7 +177,7 @@ export function ScalarSub(
 
 export function ScalarAdd(
   a: BigUint64Array,
-  b: BigUint64Array
+  b: BigUint64Array,
 ): BigUint64Array {
   const sum = new BigUint64Array(5)
   const mask: bigint = (1n << 52n) - 1n
@@ -196,7 +194,7 @@ export function ScalarAdd(
 
 export function ScalarMul(
   a: BigUint64Array,
-  b: BigUint64Array
+  b: BigUint64Array,
 ): BigUint64Array {
   const ab = MontgomeryReduce(MulInternal(a, b))
   return MontgomeryReduce(MulInternal(ab, RR))
@@ -228,29 +226,29 @@ function MontgomeryReduce(limbs: bigint[]) {
   const n0 = _part1(limbs[0])
   const n1 = _part1(n0.i1 + limbs[1] + _m(n0.i0, BigInt(l[1])))
   const n2 = _part1(
-    n1.i1 + limbs[2] + _m(n0.i0, BigInt(l[2])) + _m(n1.i0, BigInt(l[1]))
+    n1.i1 + limbs[2] + _m(n0.i0, BigInt(l[2])) + _m(n1.i0, BigInt(l[1])),
   )
   const n3 = _part1(
-    n2.i1 + limbs[3] + _m(n1.i0, BigInt(l[2])) + _m(n2.i0, BigInt(l[1]))
+    n2.i1 + limbs[3] + _m(n1.i0, BigInt(l[2])) + _m(n2.i0, BigInt(l[1])),
   )
   const n4 = _part1(
     n3.i1 +
-      limbs[4] +
-      _m(n0.i0, BigInt(l[4])) +
-      _m(n2.i0, BigInt(l[2])) +
-      _m(n3.i0, BigInt(l[1]))
+    limbs[4] +
+    _m(n0.i0, BigInt(l[4])) +
+    _m(n2.i0, BigInt(l[2])) +
+    _m(n3.i0, BigInt(l[1])),
   )
 
   // limbs is divisible by R now, so we can divide by R by simply storing the upper half as the result
   const r0 = _part2(
     n4.i1 +
-      limbs[5] +
-      _m(n1.i0, BigInt(l[4])) +
-      _m(n3.i0, BigInt(l[2])) +
-      _m(n4.i0, BigInt(l[1]))
+    limbs[5] +
+    _m(n1.i0, BigInt(l[4])) +
+    _m(n3.i0, BigInt(l[2])) +
+    _m(n4.i0, BigInt(l[1])),
   )
   const r1 = _part2(
-    r0.i1 + limbs[6] + _m(n2.i0, BigInt(l[4])) + _m(n4.i0, BigInt(l[2]))
+    r0.i1 + limbs[6] + _m(n2.i0, BigInt(l[4])) + _m(n4.i0, BigInt(l[2])),
   )
   const r2 = _part2(r1.i1 + limbs[7] + _m(n3.i0, BigInt(l[4])))
   const r3 = _part2(r2.i1 + limbs[8] + _m(n4.i0, BigInt(l[4])))
@@ -368,23 +366,48 @@ function topHalf(x: number) {
   return (x >> 4) & 15
 }
 
+export function readUint8ArrayIntoBigIntArray(bytes: Uint8Array): bigint[] {
+  const bigInts: bigint[] = []
+  for (let i = 0; i < bytes.length; i += 8) {
+    let num: bigint = 0n
+    for (let j = i + 7; j >= i; j--) {
+      num = (num << 8n) | BigInt(bytes[j])
+    }
+    bigInts.push(num)
+  }
+  return bigInts
+}
+
 export class Scalar {
-  bytes: Uint8Array
+  public bytes: Uint8Array
 
   static FromBytes(data: Uint8Array): Scalar {
-    // TODO add size !== 32 error
+    if (data.length !== 32) {
+      throw new Error(`Invalid size of data: should be 32, got ${data.length}`)
+    }
     const s = new Scalar()
     s.bytes = data
     return s
   }
 
-  static FromBytesModOrderWide(data: Uint8Array): Uint8Array {
-    const tt1 = FromBytesWide(data)
-    return Pack(tt1)
+  static FromBits(bytes: Uint8Array): Scalar {
+    if (bytes.length !== 32) {
+      throw new Error(`Invalid size of data: should be 32, got ${bytes.length}`)
+    }
+    const s = new Scalar()
+    s.bytes = bytes
+    s.bytes[31] &= 0b0111_1111
+    return s
   }
 
-  ToBigInt(): bigint {
-    return Keccak.getUInt64FromBytes(this.bytes)
+  ToBytes(): Uint8Array {
+    return this.bytes.slice()
+  }
+
+  static FromBytesModOrderWide(data: Uint8Array): Uint8Array {
+    const tt1 = FromBytesWide(data)
+    // todo: replace return type with Scalar
+    return Pack(tt1)
   }
 
   static ToRadix16(bytes: Uint8Array): number[] {
@@ -426,36 +449,51 @@ export class Scalar {
     return res
   }
 
+  static MultiplyScalarBytesByCofactor(bytes: Uint8Array): Uint8Array {
+    const res = new Uint8Array(bytes.length)
+    let high = 0
+
+    for (let i = 0; i < bytes.length; i++) {
+      const r = bytes[i] & 0b11100000 // carry bits
+      bytes[i] = bytes[i] << 3 // multiply by 8
+      bytes[i] += high
+      res[i] = bytes[i]
+      high = r >> 5
+    }
+
+    return res
+  }
+
   // sbyte[]
   NonAdjacentForm(size: number): number[] {
     // sbyte[] naf = new sbyte[256];
-    const naf = new Array(256)
+    const naf: number[] = new Array(256).fill(0)
 
-    const xU64 = this.bytes // Scalar52.GetU64Data(ScalarBytes);
+    const decoded_xU64 = readUint8ArrayIntoBigIntArray(this.ToBytes())
+    const xU64: bigint[] = [...decoded_xU64, ...new Array(5 - decoded_xU64.length).fill(0n)]
 
-    const width = 1 << size
-    const windowMask = width - 1
+    const width = 1n << BigInt(size)
+    const windowMask = width - 1n
 
     let pos = 0
-    let carry = 0
+    let carry = 0n
     while (pos < 256) {
       // Construct a buffer of bits of the scalar, starting at bit `pos`
-      const u64_idx = pos / 64
+      const u64_idx = Math.floor(pos / 64)
       const bit_idx = pos % 64
-      let bit_buf
+      let bit_buf: bigint
       if (bit_idx < 64 - size) {
         // This window's bits are contained in a single u64
-        bit_buf = xU64[u64_idx] >> bit_idx
+        bit_buf = xU64[Number(u64_idx)] >> BigInt(bit_idx)
       } else {
         // Combine the current u64's bits with the bits from the next u64
-        bit_buf =
-          (xU64[u64_idx] >> bit_idx) | (xU64[1 + u64_idx] << (64 - bit_idx))
+        bit_buf = (xU64[u64_idx] >> BigInt(bit_idx)) | (xU64[u64_idx + 1] << BigInt(64 - bit_idx))
       }
 
       // Add the carry into the current window
-      const window = carry + (bit_buf & windowMask)
+      const window: bigint = carry + (bit_buf & windowMask)
 
-      if ((window & 1) === 0) {
+      if ((window & 1n) === 0n) {
         // If the window value is even, preserve the carry and continue.
         // Why is the carry preserved?
         // If carry === 0 and window & 1 === 0, then the next carry should be 0
@@ -464,12 +502,13 @@ export class Scalar {
         continue
       }
 
-      if (window < width / 2) {
-        carry = 0
-        naf[pos] = window
+      if (window < width / 2n) {
+        carry = 0n
+        naf[pos] = Number(window)
       } else {
-        carry = 1
-        naf[pos] = window - width
+        carry = 1n
+        // naf[pos] = (window as i8).wrapping_sub(width as i8);
+        naf[pos] = Number(window - width)
       }
 
       pos += size

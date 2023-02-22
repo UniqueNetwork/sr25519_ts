@@ -1,7 +1,10 @@
 // import * as sha3 from '@noble/hashes/sha3'
 // import * as sha3Addons from '@noble/hashes/sha3-addons'
 // import * as keccak_f1800 from './keccak'
-import * as hashFunc from "./keccakf1600"
+import {keccakP} from '@noble/hashes/sha3'
+const keccakF1600 = (state: Uint8Array) => {
+  keccakP(new Uint32Array(state.buffer, state.byteOffset, Math.floor(state.byteLength / 4)), 24)
+}
 
 /// <summary>
 /// Srobe operation
@@ -109,6 +112,8 @@ export const operationToFlagMap: Record<Operation, Flag> = {
 // const RATE_INNER = 25 * 32 - CAPACITY_BITS / 8
 // const RATE = RATE_INNER - PAD_BYTES
 
+const textEncoder = new TextEncoder()
+
 export class Strobe {
   public state: Uint8Array
   public initialized: boolean
@@ -124,7 +129,7 @@ export class Strobe {
   private readonly MacLen = 16
 
   strobe_init(
-    description: string
+    description: string,
     // desclen: number
   ): void {
     // operationMap.set(Operation.Ad, Flag.FlagA)
@@ -160,10 +165,10 @@ export class Strobe {
       1,
       0 /* Empty NIST perso string */,
       1,
-      12 * 8 /* 12 = strlen("STROBEvX.Y.Z") */,
+      12 * 8, /* 12 = strlen("STROBEvX.Y.Z") */
     ])
 
-    const s = new TextEncoder().encode("STROBEv1.0.2")
+    const s = new TextEncoder().encode('STROBEv1.0.2')
     const first = new Uint8Array(f.length + s.length)
 
     first.set(f)
@@ -175,7 +180,7 @@ export class Strobe {
 
     this.strobe_duplex(first, 0, first.byteLength, false, false, true)
     this.initialized = true
-    const operateBytes = Buffer.from(description, "ascii")
+    const operateBytes = textEncoder.encode(description)
     this.operate(
       true,
       operationToFlagMap[Operation.Ad],
@@ -183,7 +188,7 @@ export class Strobe {
       0,
       operateBytes.length,
       0,
-      false
+      false,
     )
   }
 
@@ -210,7 +215,7 @@ export class Strobe {
       this.state[this.strobeR + 1] ^= 128
     }
 
-    this.state = hashFunc.Keccak.KeccakF1600(this.state, 24)
+    keccakF1600(this.state)
 
     // Keccak.KeccakF1600(ref state, 24);
     this.posBegin = 0
@@ -229,7 +234,7 @@ export class Strobe {
     count: number,
     cbefore: boolean,
     cafter: boolean,
-    forceF: boolean
+    forceF: boolean,
   ) {
     // Copy data
     const newData = data.slice(startIndex, count)
@@ -273,7 +278,7 @@ export class Strobe {
     starIndex: number,
     count: number,
     length: number,
-    more: boolean
+    more: boolean,
   ): Uint8Array | null {
     // operation is valid?
     // if (!this.operationMap.TryGetValue(operation, out let flags))
@@ -330,7 +335,7 @@ export class Strobe {
       length === 0 ? count : length,
       cBefore,
       cAfter,
-      false
+      false,
     )
 
     if ((flags & (Flag.FlagI | Flag.FlagA)) === (Flag.FlagI | Flag.FlagA)) {
@@ -392,7 +397,7 @@ export class Strobe {
     count: number,
     cbefore: boolean,
     cafter: boolean,
-    forceF: boolean
+    forceF: boolean,
   ): Uint8Array {
     if (cbefore && cafter) {
       // throw new Exception($"either {nameof(cbefore)} or {nameof(cafter)} should be set to false");
@@ -460,7 +465,7 @@ export class Strobe {
     meta: boolean,
     additionalData: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ) {
     this.operate(
       meta,
@@ -469,7 +474,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
+      false,
     )
   }
 
@@ -505,7 +510,7 @@ export class Strobe {
     meta: boolean,
     cleartext: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ): Uint8Array | null {
     return this.operate(
       meta,
@@ -514,7 +519,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
+      false,
     )
   }
 
@@ -550,7 +555,7 @@ export class Strobe {
     meta: boolean,
     cleartext: Uint8Array,
     startIdex: number,
-    count: number
+    count: number,
   ): Uint8Array | null {
     return this.operate(
       meta,
@@ -559,7 +564,7 @@ export class Strobe {
       startIdex,
       count,
       0,
-      false
+      false,
     )
   }
 
@@ -580,7 +585,7 @@ export class Strobe {
       0,
       0,
       outputLength,
-      false
+      false,
     )
   }
 
@@ -616,7 +621,7 @@ export class Strobe {
     meta: boolean,
     mac: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ): boolean {
     const r = this.operate(
       meta,
@@ -625,7 +630,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
+      false,
     )
 
     if (r === null) {
@@ -649,7 +654,7 @@ export class Strobe {
       0,
       0,
       length,
-      false
+      false,
     )
   }
 
@@ -665,7 +670,7 @@ export class Strobe {
   /// </param>
   send_enc_unauthenticated(
     meta: boolean,
-    plaintext: Uint8Array
+    plaintext: Uint8Array,
   ): Uint8Array | null {
     return this.send_enc_unauthenticated_f(meta, plaintext, 0, plaintext.length)
   }
@@ -690,7 +695,7 @@ export class Strobe {
     meta: boolean,
     plaintext: Uint8Array,
     startIndex: number,
-    count: number
+    count: number,
   ) {
     return this.operate(
       meta,
@@ -699,61 +704,7 @@ export class Strobe {
       startIndex,
       count,
       0,
-      false
-    )
-  }
-
-  /// <summary>
-  /// Encrypt data and authenticate additional data
-  /// </summary>
-  /// <param name="plaintext">
-  /// Data to be encrypted and authenticated
-  /// </param>
-  /// <param name="ad">
-  /// Additional data to be authenticated
-  /// </param>
-  send_aead(plaintext: Uint8Array, ad: Uint8Array): Uint8Array | null {
-    return this.send_aead_f(plaintext, 0, plaintext.length, ad, 0, ad.length)
-  }
-
-  /// <summary>
-  /// Encrypt data and authenticate additional data
-  /// </summary>
-  /// <param name="plaintext">
-  /// Data to be encrypted and authenticated
-  /// </param>
-  /// <param name="plaintextStartIndex">
-  /// Start index for reading from plaintext buffer
-  /// </param>
-  /// <param name="plaintextCount">
-  /// Number of plaintext bytes to read
-  /// </param>
-  /// <param name="ad">
-  /// Additional data to be authenticated
-  /// </param>
-  /// <param name="adStartIndex">
-  /// Start index for reading from AD buffer
-  /// </param>
-  /// <param name="adCOunt">
-  /// Number of AD bytes to read
-  /// </param>
-  send_aead_f(
-    plaintext: Uint8Array,
-    plaintextStartIndex: number,
-    plaintextCount: number,
-    ad: Uint8Array,
-    adStartIndex: number,
-    adCOunt: number
-  ): Uint8Array | null {
-    const ciphertext = this.send_enc_unauthenticated_f(
       false,
-      plaintext,
-      plaintextStartIndex,
-      plaintextCount
     )
-    this.ad_f(false, ad, adStartIndex, adCOunt)
-    // TODO
-    // ciphertext = ciphertext.Concat(this.send_mac(false, this.MacLen)).ToArray();
-    return ciphertext
   }
 }

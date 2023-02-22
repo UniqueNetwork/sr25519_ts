@@ -1,12 +1,10 @@
 // translated from the original Rust version of Strobe128
 // https://github.com/dalek-cryptography/merlin/blob/53535f32e6d6de421372d67f56176af0c0f55fd7/src/strobe.rs
+import {b} from '../templateLiteralFunctions'
 
 import {keccakP} from '@noble/hashes/sha3'
-import {u32} from '@noble/hashes/utils'
-import {b} from './utils'
-
 const keccakF1600 = (state: Uint8Array) => {
-  keccakP(u32(state), 24)
+  keccakP(new Uint32Array(state.buffer, state.byteOffset, Math.floor(state.byteLength / 4)), 24)
 }
 
 const STROBE_R = 166
@@ -43,28 +41,28 @@ export class Strobe128 {
     this.meta_ad(protocol_label, false)
   }
 
-  ////////////////////////////////////////
+  /// /////////////////////////////////////
   // public methods
-  ////////////////////////////////////////
+  /// /////////////////////////////////////
 
   public meta_ad(data: Uint8Array, more: boolean): void {
-    this.begin_op(FLAG_M | FLAG_A, more);
-    this.absorb(data);
+    this.begin_op(FLAG_M | FLAG_A, more)
+    this.absorb(data)
   }
 
   public ad(data: Uint8Array, more: boolean): void {
-    this.begin_op(FLAG_A, more);
-    this.absorb(data);
+    this.begin_op(FLAG_A, more)
+    this.absorb(data)
   }
 
   public prf(data: Uint8Array, more: boolean): void {
-    this.begin_op(FLAG_I | FLAG_A | FLAG_C, more);
-    this.squeeze(data);
+    this.begin_op(FLAG_I | FLAG_A | FLAG_C, more)
+    this.squeeze(data)
   }
 
   public key(data: Uint8Array, more: boolean): void {
-    this.begin_op(FLAG_A | FLAG_C, more);
-    this.overwrite(data);
+    this.begin_op(FLAG_A | FLAG_C, more)
+    this.overwrite(data)
   }
 
   public clone(): Strobe128 {
@@ -85,9 +83,9 @@ export class Strobe128 {
     }
   }
 
-  ////////////////////////////////////////
+  /// /////////////////////////////////////
   // private methods
-  ////////////////////////////////////////
+  /// /////////////////////////////////////
   private run_f(): void {
     this.state[this.pos] ^= this.pos_begin
     this.state[this.pos + 1] ^= 0x04
@@ -139,7 +137,7 @@ export class Strobe128 {
 
     // Skip adjusting direction information (we just use AD, PRF)
     if ((flags & FLAG_T) !== 0) {
-      throw new Error(`You used the T flag, which this implementation doesn't support`)
+      throw new Error('You used the T flag, which this implementation doesn\'t support')
     }
 
     const old_begin = this.pos_begin

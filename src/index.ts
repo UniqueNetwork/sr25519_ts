@@ -1,50 +1,107 @@
-import * as sc from "./signingContext"
+import {Keypair as SecretKeypair} from './keypair'
+import {isHex, hexStringToUint8Array, uInt8ArrayToHex} from '../translated/mnemonic/bytes'
+import {decodeSubstrateAddress, encodeSubstrateAddress} from './address'
+import {parseUriAndDerive} from '../translated/mnemonic/uri'
 
-export interface Keypair {
-  publicKey: Uint8Array
-  secretKey: Uint8Array
+import type {IUniqueSdkSigner, UNIQUE_SDK_SignTxResultResponse, UNIQUE_SDK_UnsignedTxPayloadBody} from './types'
+import {PublicKey} from './signingContext'
+export type {IUniqueSdkSigner}
+
+const textEncoder = new TextEncoder()
+const toU8a = (message: Uint8Array | string): Uint8Array => {
+  return typeof message === 'string'
+    ? isHex(message)
+      ? hexStringToUint8Array(message)
+      : textEncoder.encode(message)
+    : message
 }
 
-export const Sr25519 = {
-  sign(message: Uint8Array, keypair: Keypair): Uint8Array {
-    const secretKey = sc.SecretKey.FromBytes095(keypair.secretKey)
-    const publicKey = sc.PublicKey.FromBytes(keypair.publicKey)
+/**
+ * private method, don't export
+ * @param keypair
+ */
+const getAccountFromKeypair = (keypair: SecretKeypair) => {
+  return {
+    get publicKey() {
+      return keypair.publicKey.key.slice()
+    },
+    address: encodeSubstrateAddress(keypair.publicKey.key),
+    prefixedAddress(prefix: number = 42) {
+      return encodeSubstrateAddress(keypair.publicKey.key, prefix)
+    },
 
-    const signingContext = new sc.SigningContext085(
-      Buffer.from("substrate", "ascii")
-    )
+    /**
+     * @name sign
+     * @param message [Uint8Array | string]; Hex string or UTF-8 string will be automatically converted to a byte array
+     * @returns [Uint8Array] - signature
+     */
+    sign(message: Uint8Array | string): Uint8Array {
+      return keypair.secretKey.sign(toU8a(message), keypair.publicKey).ToBytes()
+    },
 
-    const signingTranscript = new sc.SigningTranscript(signingContext)
+    /**
+     * @name verify
+     * @param message [Uint8Array | string]; Hex string or UTF-8 string will be automatically converted to a byte array
+     * @param signature [Uint8Array]
+     * @returns [boolean] - true if the signature is valid, false otherwise
+     */
+    verify(message: Uint8Array | string, signature: Uint8Array): boolean {
+      return keypair.publicKey.verify(toU8a(message), signature)
+    },
 
-    signingContext.Bytes(message)
+    /**
+     * @name signer
+     * @description signer for @unique-nft/sdk
+     */
+    signer: {
+      async sign(payload: UNIQUE_SDK_UnsignedTxPayloadBody): Promise<UNIQUE_SDK_SignTxResultResponse> {
+        const message = hexStringToUint8Array(payload.signerPayloadHex)
+        const signatureBytes = keypair.secretKey.sign(message, keypair.publicKey).ToBytes()
+        const signature = uInt8ArrayToHex(signatureBytes)
 
-    const signature = signingContext.sign(
-      signingTranscript,
-      secretKey,
-      publicKey,
-      new sc.RandomGenerator()
-    )
+        // '01' is the prefix for sr25519 signature type
+        return {
+          signature: `0x01${signature.substring(2)}`,
+          signatureType: 'sr25519',
+        }
+      },
+    } satisfies IUniqueSdkSigner,
+  }
+}
 
-    // signature should be 64 bytes length
-    return signature.ToBytes()
+export const getAccount = (uri: string) => {
+  const keypair = SecretKeypair.FromUri(uri)
+  return getAccountFromKeypair(keypair)
+}
+
+export const verifySignature = (message: Uint8Array | string, signature: Uint8Array | string, signerAddressOrPublicKey: Uint8Array | string) => {
+  const messageU8a = toU8a(message)
+  let publicKeyBytes: Uint8Array
+
+  if (typeof signerAddressOrPublicKey === 'string') {
+    publicKeyBytes = isHex(signerAddressOrPublicKey)
+      ? hexStringToUint8Array(signerAddressOrPublicKey)
+      : decodeSubstrateAddress(signerAddressOrPublicKey)
+  } else {
+    publicKeyBytes = signerAddressOrPublicKey
+  }
+  const publicKey = PublicKey.FromBytes(publicKeyBytes)
+  const signatureU8a = typeof signature === 'string'
+    ? hexStringToUint8Array(signature)
+    : signature
+
+  return publicKey.verify(messageU8a, signatureU8a)
+}
+
+export const utils = {
+  getAccountFromMiniSecret: (miniSecret: Uint8Array) => {
+    const keypair = SecretKeypair.FromMiniSecret(miniSecret)
+    return getAccountFromKeypair(keypair)
   },
-  verify(
-    message: Uint8Array,
-    signature: Uint8Array,
-    publicKey: Uint8Array
-  ): boolean {
-    // return false
-
-    let contextPublicKey = sc.PublicKey.FromBytes(publicKey)
-
-    let signingContext = new sc.SigningContext085(
-      Buffer.from("substrate", "ascii")
-    )
-
-    let signingTranscript = new sc.SigningTranscript(signingContext)
-
-    signingContext.Bytes(message)
-
-    return signingContext.verify(signingTranscript, signature, contextPublicKey)
+  getAccountFromKeypair,
+  getAccountFromSecretKeyBytes: (secretKeyBytes: Uint8Array) => {
+    const keypair = SecretKeypair.FromSecretKeyBytes(secretKeyBytes)
+    return getAccountFromKeypair(keypair)
   },
+  dangerouslyParseUriAndGetFullKeypair: parseUriAndDerive,
 }

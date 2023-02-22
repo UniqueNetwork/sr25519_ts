@@ -3,7 +3,9 @@
     "module": "commonjs",
     "target": "esnext",
     "sourceMap": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
   },
   "exclude": [
     "node_modules"
