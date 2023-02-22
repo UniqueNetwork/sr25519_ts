@@ -17,7 +17,13 @@ module.exports = {
     '@typescript-eslint/prefer-nullish-coalescing': 'off',
     '@typescript-eslint/object-curly-spacing': ['warn', 'never'],
     'object-curly-spacing': ['warn', 'never'],
-    '@typescript-eslint/space-before-function-paren': ['warn', 'never'],
+    '@typescript-eslint/quotes': 'off',
+
+    'no-multi-spaces': 'off',
+    'padded-blocks': 'off',
+
+    'space-before-function-paren': 'off',
+    '@typescript-eslint/space-before-function-paren': 'off',
 
     'no-trailing-spaces': 'off',
     '@typescript-eslint/no-trailing-spaces': 'off',
@@ -27,5 +33,8 @@ module.exports = {
 
     'import/consistent-type-specifier-style': 'off',
     '@typescript-eslint/consistent-type-imports': 'off',
+
+    '@typescript-eslint/no-unused-vars': 'off',
+    'no-multiple-empty-lines': ['warn', {max: 2, maxEOF: 1}],
   },
 }

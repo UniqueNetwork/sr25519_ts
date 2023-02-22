@@ -32,12 +32,10 @@ export class SecretKey {
   nonce: Uint8Array
   key: Scalar
 
-  getInConcatenatedForm() {
-    return Uint8Array.from([...Scalar.MultiplyScalarBytesByCofactor(this.key.bytes.slice()), ...this.nonce])
-  }
-
   static FromBytes(bytes: Uint8Array): SecretKey {
-    if (bytes.length !== 64) throw new Error('Invalid secret key length')
+    if (bytes.length !== 64) {
+      throw new Error(`Invalid secret key length: ${bytes.length} (expected 64)`)
+    }
 
     const secretKey: SecretKey = new SecretKey()
 
@@ -51,6 +49,9 @@ export class SecretKey {
   }
 
   static FromScalarAndNonce(scalar: Scalar, nonce: Uint8Array): SecretKey {
+    if (nonce.length !== 32) {
+      throw new Error(`Invalid nonce length: ${nonce.length} (expected 32)`)
+    }
     const secretKey: SecretKey = new SecretKey()
 
     secretKey.key = scalar
@@ -60,6 +61,10 @@ export class SecretKey {
   }
 
   static FromMiniSecret(miniSecret: Uint8Array): SecretKey {
+    if (miniSecret.length !== 32) {
+      throw new Error(`Invalid mini secret length: ${miniSecret.length} (expected 32)`)
+    }
+
     const r = sha512(miniSecret)
 
     const key = r.slice(0, 32)

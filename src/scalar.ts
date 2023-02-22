@@ -334,38 +334,6 @@ export function FromBytesWide(data: Uint8Array): BigUint64Array {
   return ScalarAdd(hi, lo)
 }
 
-export function Pack(data: BigUint64Array): Uint8Array {
-  return ScalarBigintToBytesForm(data)
-  // let dt = new BigUint64Array(5);
-  // for (let i = 0; i < 4; i++)
-  // {
-  //     for (let j = 0; j < 8; j++)
-  //     {
-  //         dt[i] |= BigInt(data[(i * 8) + j]) << BigInt(j * 8);
-  //     }
-  // }
-
-  // let mask = ((1n << 52n) - 1n);
-  // let topMask = ((1n << 48n) - 1n);
-  // let s = new BigUint64Array(5);
-
-  // s[0] = dt[0] & mask;
-  // s[1] = ((dt[0] >> 52n) | (dt[1] << 12n)) & mask;
-  // s[2] = ((dt[1] >> 40n) | (dt[2] << 24n)) & mask;
-  // s[3] = ((dt[2] >> 28n) | (dt[3] << 36n)) & mask;
-  // s[4] = (dt[3] >> 16n) & topMask;
-
-  // return s;
-}
-
-function botHalf(x: number) {
-  return x & 15
-}
-
-function topHalf(x: number) {
-  return (x >> 4) & 15
-}
-
 export function readUint8ArrayIntoBigIntArray(bytes: Uint8Array): bigint[] {
   const bigInts: bigint[] = []
   for (let i = 0; i < bytes.length; i += 8) {
@@ -407,7 +375,7 @@ export class Scalar {
   static FromBytesModOrderWide(data: Uint8Array): Uint8Array {
     const tt1 = FromBytesWide(data)
     // todo: replace return type with Scalar
-    return Pack(tt1)
+    return ScalarBigintToBytesForm(tt1)
   }
 
   static ToRadix16(bytes: Uint8Array): number[] {
@@ -415,21 +383,21 @@ export class Scalar {
 
     // Step 1: change radix.
     // Convert from radix 256 (bytes) to radix 16 (nibbles)
-
     for (let i = 0; i < 32; i++) {
-      output[2 * i] = botHalf(bytes[i]) // - 128
-      output[2 * i + 1] = topHalf(bytes[i]) //  - 128
+      output[2 * i] = bytes[i] & 15            // bottom 4 bits
+      output[2 * i + 1] = (bytes[i] >> 4) & 15 // top 4 bits
     }
-    // Precondition note: since self[31] <= 127, output[63] <= 7
 
     // Step 2: recenter coefficients from [0,16) to [-8,8)
     for (let i = 0; i < 63; i++) {
-      const carry = (output[i] + 8) >> 4
-      output[i] -= carry << 4
-      output[i + 1] += carry
+      const carry = (output[i] + 8) >> 4  // if output[i] >= 8, carry = 1, else carry = 0
+      output[i] -= carry << 4             // if output[i] >= 8, output[i] -= 16
+      output[i + 1] += carry              // if output[i] >= 8, output[i + 1] += 1
     }
-    // Precondition note: output[63] is not recentered.  It
-    // increases by carry <= 1.  Thus output[63] <= 8.
+    // Precondition note:
+    // since self[31] <= 127 (01111111), output[63] <= 7 (0111)
+    // output[63] is not recentered
+    // It increases by carry <= 1. Thus output[63] <= 8
 
     return output
   }

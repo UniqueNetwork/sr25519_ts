@@ -5,6 +5,10 @@ import {AffineNielsPoint} from './affineNielsPoint'
 export class EdwardsBasepointTable {
   public lt: LookupTable[]
 
+  constructor(lt: LookupTable[] = []) {
+    this.lt = lt
+  }
+
   Mul(sclr: Scalar): EdwardsPoint {
     const a = Scalar.ToRadix16(sclr.bytes)
     let P = EdwardsPoint.Identity()
@@ -50,6 +54,14 @@ export class LookupTable {
     const res = new LookupTable()
     res.affineNielsPoints = p
     return res
+  }
+
+  static FromBigintMatrix = (table: bigint[][]): LookupTable => {
+    return LookupTable.FromANPArray(table.map(AffineNielsPoint.FromArray))
+  }
+
+  static FromArrayOfStringsInRadix36Form(table: string[]): LookupTable {
+    return LookupTable.FromANPArray(table.map(AffineNielsPoint.FromStringInRadix36Form))
   }
 
   // x - sbyte

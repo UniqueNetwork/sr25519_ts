@@ -12,8 +12,8 @@ export class Keypair {
   }
 
   static FromBytes(bytes: Uint8Array): Keypair {
-    const publicKey = PublicKey.FromBytes(bytes.slice(0, 32))
-    const secretKey = SecretKey.FromScalarAndNonce(Scalar.FromBytes(bytes.slice(32, 64)), bytes.slice(64, 96))
+    const secretKey = SecretKey.FromBytes(bytes.slice(0, 64))
+    const publicKey = PublicKey.FromBytes(bytes.slice(64))
     return new Keypair(publicKey, secretKey)
   }
 
@@ -34,16 +34,16 @@ export class Keypair {
     return await parseUriAndDeriveAsync(uri)
   }
 
-  ToBytes(): Uint8Array {
-    const bytes = new Uint8Array(96)
-    bytes.set(this.secretKey.getInConcatenatedForm())
-    bytes.set(this.publicKey.key, 64)
-    return bytes
-  }
-
   static FromMiniSecret(miniSecret: Uint8Array): Keypair {
     const secretKey = SecretKey.FromMiniSecret(miniSecret)
     const publicKey = secretKey.ToPublicKey()
     return new Keypair(publicKey, secretKey)
+  }
+
+  ToBytes(): Uint8Array {
+    const bytes = new Uint8Array(96)
+    bytes.set(this.secretKey.ToBytes())
+    bytes.set(this.publicKey.key, 64)
+    return bytes
   }
 }

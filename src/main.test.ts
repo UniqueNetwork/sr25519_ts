@@ -62,10 +62,10 @@ describe('main test', async() => {
     expect(account.verify(message, signature)).toBe(true)
   })
 
-  test('sign with uniqueSdkSigner', async() => {
+  test('sign with a signer for Unique SDK', async() => {
     const account = getAccount(Alice.uri)
     const message = b`hello world`
-    const signResult = await account.uniqueSdkSigner.sign({signerPayloadHex: uInt8ArrayToHex(message)})
+    const signResult = await account.signer.sign({signerPayloadHex: uInt8ArrayToHex(message)})
 
     const isValid = utilCrypto.sr25519Verify(
       message,

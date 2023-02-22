@@ -19,6 +19,29 @@ export class AffineNielsPoint {
     return res
   }
 
+  static FromArray(array: bigint[]): AffineNielsPoint {
+    if (array.length !== 15) {
+      throw new Error('Array length must be 15')
+    }
+    return AffineNielsPoint.FromElements(
+      new FieldElement(array.slice(0, 5)),
+      new FieldElement(array.slice(5, 10)),
+      new FieldElement(array.slice(10, 15)),
+    )
+  }
+
+  static FromStringInRadix36Form(param: string): AffineNielsPoint {
+    const array = param.split(',').map(x => BigInt(parseInt(x, 36)))
+    if (array.length !== 15) {
+      throw new Error('Array length must be 15')
+    }
+    return AffineNielsPoint.FromElements(
+      new FieldElement(array.slice(0, 5)),
+      new FieldElement(array.slice(5, 10)),
+      new FieldElement(array.slice(10, 15)),
+    )
+  }
+
   ConditionalAssign(a: AffineNielsPoint, choice: boolean): void {
     this.Y_plus_X.ConditionalAssign(a.Y_plus_X, choice)
     this.Y_minus_X.ConditionalAssign(a.Y_minus_X, choice)

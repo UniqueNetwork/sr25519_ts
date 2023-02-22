@@ -22,7 +22,8 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build": "rimraf dist && tsup",
+    "build": "rimraf dist && tsup && gzip dist/sr25519.min.js -k",
+    "analyze": "rimraf dist && tsup --metafile && gzip dist/sr25519.min.js -k",
     "test": "vitest",
     "testrun": "vitest run"
   },

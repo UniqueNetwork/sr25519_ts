@@ -5,15 +5,27 @@ import {parseUriAndDerive} from '../translated/mnemonic/uri'
 
 import type {IUniqueSdkSigner, UNIQUE_SDK_SignTxResultResponse, UNIQUE_SDK_UnsignedTxPayloadBody} from './types'
 import {PublicKey} from './signingContext'
+
 export type {IUniqueSdkSigner}
 
 const textEncoder = new TextEncoder()
-const toU8a = (message: Uint8Array | string): Uint8Array => {
+const anyToU8a = (message: Uint8Array | string): Uint8Array => {
   return typeof message === 'string'
     ? isHex(message)
       ? hexStringToUint8Array(message)
       : textEncoder.encode(message)
     : message
+}
+const u8aOrHexToU8a = (message: Uint8Array | string): Uint8Array => {
+  if (message instanceof Uint8Array) {
+    return message
+  } else {
+    if (isHex(message)) {
+      return hexStringToUint8Array(message)
+    } else {
+      throw new Error('Invalid message: should be Uint8Array or hex string')
+    }
+  }
 }
 
 /**
@@ -36,7 +48,7 @@ const getAccountFromKeypair = (keypair: SecretKeypair) => {
      * @returns [Uint8Array] - signature
      */
     sign(message: Uint8Array | string): Uint8Array {
-      return keypair.secretKey.sign(toU8a(message), keypair.publicKey).ToBytes()
+      return keypair.secretKey.sign(anyToU8a(message), keypair.publicKey).ToBytes()
     },
 
     /**
@@ -45,8 +57,8 @@ const getAccountFromKeypair = (keypair: SecretKeypair) => {
      * @param signature [Uint8Array]
      * @returns [boolean] - true if the signature is valid, false otherwise
      */
-    verify(message: Uint8Array | string, signature: Uint8Array): boolean {
-      return keypair.publicKey.verify(toU8a(message), signature)
+    verify(message: Uint8Array | string, signature: Uint8Array | string): boolean {
+      return keypair.publicKey.verify(anyToU8a(message), u8aOrHexToU8a(signature))
     },
 
     /**
@@ -75,32 +87,30 @@ export const getAccount = (uri: string) => {
 }
 
 export const verifySignature = (message: Uint8Array | string, signature: Uint8Array | string, signerAddressOrPublicKey: Uint8Array | string) => {
-  const messageU8a = toU8a(message)
   let publicKeyBytes: Uint8Array
-
-  if (typeof signerAddressOrPublicKey === 'string') {
+  if (signerAddressOrPublicKey instanceof Uint8Array) {
+    publicKeyBytes = signerAddressOrPublicKey
+  } else if (typeof signerAddressOrPublicKey === 'string') {
     publicKeyBytes = isHex(signerAddressOrPublicKey)
       ? hexStringToUint8Array(signerAddressOrPublicKey)
       : decodeSubstrateAddress(signerAddressOrPublicKey)
   } else {
-    publicKeyBytes = signerAddressOrPublicKey
+    throw new Error('Invalid signerAddressOrPublicKey: should be Uint8Array or hex string')
   }
-  const publicKey = PublicKey.FromBytes(publicKeyBytes)
-  const signatureU8a = typeof signature === 'string'
-    ? hexStringToUint8Array(signature)
-    : signature
 
-  return publicKey.verify(messageU8a, signatureU8a)
+  const publicKey = PublicKey.FromBytes(publicKeyBytes)
+
+  return publicKey.verify(anyToU8a(message), u8aOrHexToU8a(signature))
 }
 
 export const utils = {
-  getAccountFromMiniSecret: (miniSecret: Uint8Array) => {
-    const keypair = SecretKeypair.FromMiniSecret(miniSecret)
+  getAccountFromMiniSecret: (miniSecret: Uint8Array | string) => {
+    const keypair = SecretKeypair.FromMiniSecret(u8aOrHexToU8a(miniSecret))
     return getAccountFromKeypair(keypair)
   },
   getAccountFromKeypair,
-  getAccountFromSecretKeyBytes: (secretKeyBytes: Uint8Array) => {
-    const keypair = SecretKeypair.FromSecretKeyBytes(secretKeyBytes)
+  getAccountFromSecretKeyBytes: (secretKeyBytes: Uint8Array | string) => {
+    const keypair = SecretKeypair.FromSecretKeyBytes(u8aOrHexToU8a(secretKeyBytes))
     return getAccountFromKeypair(keypair)
   },
   dangerouslyParseUriAndGetFullKeypair: parseUriAndDerive,
