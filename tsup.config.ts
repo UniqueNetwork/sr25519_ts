@@ -9,7 +9,6 @@ export default defineConfig([
     ],
     target: 'es2020',
     dts: true,
-    // splitting: false,
     sourcemap: true,
     // noExternal: [/^base/, /\^@noble/],
   },

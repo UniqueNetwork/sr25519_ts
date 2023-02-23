@@ -5,6 +5,7 @@ import {parseUriAndDerive} from '../translated/mnemonic/uri'
 
 import type {IUniqueSdkSigner, UNIQUE_SDK_SignTxResultResponse, UNIQUE_SDK_UnsignedTxPayloadBody} from './types'
 import {PublicKey} from './signingContext'
+import {mnemonicToMiniSecret} from '../translated/mnemonic/mnemonic'
 
 export type {IUniqueSdkSigner}
 
@@ -81,11 +82,6 @@ const getAccountFromKeypair = (keypair: SecretKeypair) => {
   }
 }
 
-export const getAccount = (uri: string) => {
-  const keypair = SecretKeypair.FromUri(uri)
-  return getAccountFromKeypair(keypair)
-}
-
 export const verifySignature = (message: Uint8Array | string, signature: Uint8Array | string, signerAddressOrPublicKey: Uint8Array | string) => {
   let publicKeyBytes: Uint8Array
   if (signerAddressOrPublicKey instanceof Uint8Array) {
@@ -103,15 +99,31 @@ export const verifySignature = (message: Uint8Array | string, signature: Uint8Ar
   return publicKey.verify(anyToU8a(message), u8aOrHexToU8a(signature))
 }
 
-export const utils = {
-  getAccountFromMiniSecret: (miniSecret: Uint8Array | string) => {
-    const keypair = SecretKeypair.FromMiniSecret(u8aOrHexToU8a(miniSecret))
+export const dangerouslyParseUriAndGetFullKeypair = parseUriAndDerive
+
+export const Account = {
+  fromUri: (uri: string) => {
+    const keypair = SecretKeypair.FromUri(uri)
     return getAccountFromKeypair(keypair)
   },
-  getAccountFromKeypair,
-  getAccountFromSecretKeyBytes: (secretKeyBytes: Uint8Array | string) => {
-    const keypair = SecretKeypair.FromSecretKeyBytes(u8aOrHexToU8a(secretKeyBytes))
-    return getAccountFromKeypair(keypair)
+  verifySignature,
+  other: {
+    fromMiniSecret: (miniSecret: Uint8Array | string) => {
+      const keypair = SecretKeypair.FromMiniSecret(u8aOrHexToU8a(miniSecret))
+      return getAccountFromKeypair(keypair)
+    },
+    fromSecretKeyBytes: (secretKeyBytes: Uint8Array | string) => {
+      const keypair = SecretKeypair.FromSecretKeyBytes(u8aOrHexToU8a(secretKeyBytes))
+      return getAccountFromKeypair(keypair)
+    },
+    fromKeypair: getAccountFromKeypair,
+    mnemonicToMiniSecret,
+    dangerouslyParseUriAndGetFullKeypair,
   },
-  dangerouslyParseUriAndGetFullKeypair: parseUriAndDerive,
+  utils: {
+    encodeSubstrateAddress,
+    decodeSubstrateAddress,
+  },
 }
+
+export default Account

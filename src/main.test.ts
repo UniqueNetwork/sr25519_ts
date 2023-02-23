@@ -1,6 +1,6 @@
 import {describe, test, expect, beforeAll} from 'vitest'
 
-import {getAccount, utils} from './index'
+import {Account} from './index'
 import {encodeSubstrateAddress} from './address'
 import {b, hex} from '../translated/templateLiteralFunctions'
 import {DEFAULT_MNEMONIC} from '../translated/mnemonic/uri'
@@ -24,7 +24,7 @@ describe('main test', async() => {
   })
 
   test('getAccount', () => {
-    const account = getAccount(Alice.uri)
+    const account = Account.fromUri(Alice.uri)
     expect(account.publicKey).toEqual(Alice.publicKey)
     expect(account.address).toEqual(Alice.address.default)
   })
@@ -35,7 +35,7 @@ describe('main test', async() => {
     expect(address42).toEqual(Alice.address.default)
     expect(address7391).toEqual(Alice.address.unique)
 
-    const account = getAccount(Alice.uri)
+    const account = Account.fromUri(Alice.uri)
     expect(account.address).toEqual(Alice.address.default)
     expect(account.prefixedAddress(7391)).toEqual(Alice.address.unique)
   })
@@ -46,14 +46,14 @@ describe('main test', async() => {
     expect(miniSecretFromPolkadot).toEqual(miniSecretFromOurLib)
 
     const keypairFromPolkadot = utilCrypto.sr25519PairFromSeed(miniSecretFromPolkadot)
-    const keypairFromOurLib = utils.dangerouslyParseUriAndGetFullKeypair(DEFAULT_MNEMONIC)
+    const keypairFromOurLib = Account.other.dangerouslyParseUriAndGetFullKeypair(DEFAULT_MNEMONIC)
 
     expect(keypairFromPolkadot.publicKey).toEqual(keypairFromOurLib.publicKey.key)
     expect(keypairFromPolkadot.secretKey).toEqual(keypairFromOurLib.secretKey.ToBytes())
   })
 
   test('sign', () => {
-    const account = getAccount(Alice.uri)
+    const account = Account.fromUri(Alice.uri)
     const message = b`hello world`
     const signature = account.sign(message)
     const isValid = utilCrypto.sr25519Verify(message, signature, account.publicKey)
@@ -63,7 +63,7 @@ describe('main test', async() => {
   })
 
   test('sign with a signer for Unique SDK', async() => {
-    const account = getAccount(Alice.uri)
+    const account = Account.fromUri(Alice.uri)
     const message = b`hello world`
     const signResult = await account.signer.sign({signerPayloadHex: uInt8ArrayToHex(message)})
 
@@ -77,8 +77,8 @@ describe('main test', async() => {
   })
 
   test('verify', () => {
-    const keypair = utils.dangerouslyParseUriAndGetFullKeypair(Alice.uri)
-    const account = getAccount(Alice.uri)
+    const keypair = Account.other.dangerouslyParseUriAndGetFullKeypair(Alice.uri)
+    const account = Account.fromUri(Alice.uri)
     const publicKey = account.publicKey
 
     // check that the account is the same as the keypair
@@ -100,7 +100,7 @@ describe('main test', async() => {
   })
 
   test('verify quick test', () => {
-    const account = getAccount(Alice.uri)
+    const account = Account.fromUri(Alice.uri)
     const message = b`abc`
     const signature = hex`8204a21d35c2e09ad44908b9835aea2a224944fa67ccfa3c69999aa03fe2882049a9fdab728795f0f8d1ee40e1f413574635ddf58600990277625d31dd031083`
 
@@ -109,7 +109,7 @@ describe('main test', async() => {
   })
 
   test('verify quick test - negative', () => {
-    const account = getAccount(Alice.uri)
+    const account = Account.fromUri(Alice.uri)
     const message = b`abd`
     const signature = hex`8204a21d35c2e09ad44908b9835aea2a224944fa67ccfa3c69999aa03fe2882049a9fdab728795f0f8d1ee40e1f413574635ddf58600990277625d31dd031083`
 
