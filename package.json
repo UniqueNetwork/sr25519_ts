@@ -1,6 +1,6 @@
 {
   "name": "@unique-nft/sr25519",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Pure Typescript sr25519 implementation",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
