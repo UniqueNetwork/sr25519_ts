@@ -5,7 +5,7 @@ import {parseUriAndDerive} from '../translated/mnemonic/uri'
 
 import type {IUniqueSdkSigner, UNIQUE_SDK_SignTxResultResponse, UNIQUE_SDK_UnsignedTxPayloadBody} from './types'
 import {PublicKey} from './signingContext'
-import {mnemonicToMiniSecret} from '../translated/mnemonic/mnemonic'
+import {generateMnemonic, mnemonicToMiniSecret} from '../translated/mnemonic/mnemonic'
 
 export type {IUniqueSdkSigner}
 
@@ -101,7 +101,7 @@ export const verifySignature = (message: Uint8Array | string, signature: Uint8Ar
 
 export const dangerouslyParseUriAndGetFullKeypair = parseUriAndDerive
 
-export const Account = {
+export const Sr25519Account = {
   fromUri: (uri: string) => {
     const keypair = SecretKeypair.FromUri(uri)
     return getAccountFromKeypair(keypair)
@@ -124,6 +124,12 @@ export const Account = {
     encodeSubstrateAddress,
     decodeSubstrateAddress,
   },
+  generateMnemonic,
 }
 
-export default Account
+/** @deprecated use Sr25519Account instead */
+export const Account = Sr25519Account
+
+export default Sr25519Account
+
+export type ISr25519Account = ReturnType<typeof getAccountFromKeypair>

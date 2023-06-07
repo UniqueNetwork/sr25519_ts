@@ -1,6 +1,7 @@
 import {sha256} from '@noble/hashes/sha256'
 import {sha512} from '@noble/hashes/sha512'
 import {pbkdf2, pbkdf2Async} from '@noble/hashes/pbkdf2'
+import {randomBytes} from '@noble/hashes/utils'
 
 const INVALID_MNEMONIC = 'Invalid mnemonicToMiniSecretAsync'
 const INVALID_ENTROPY = 'Invalid entropy'
@@ -12,11 +13,6 @@ const WORDS_MAP = DEFAULT_WORDLIST.split('|').reduce<Record<string, number>>((ac
   acc[elem] = index
   return acc
 }, {})
-
-const bytesToBinaryString = (bytes: number[] | Uint8Array): string => {
-  return (bytes instanceof Uint8Array ? Array.from(bytes) : bytes)
-    .map(byte => byte.toString(2).padStart(8, '0')).join()
-}
 
 // returns the first n bits of the sha256 hash of the input
 // n is the length of the entropy in bytes divided by 4
@@ -76,14 +72,26 @@ export function entropyToMnemonic(entropy: Uint8Array): string {
     throw new Error(INVALID_ENTROPY)
   }
 
-  const matched = `${bytesToBinaryString(Array.from(entropy))}${sha256FirstNBits(entropy)}`.match(/(.{1,11})/g)
-  const mapped = matched?.map((binary) => DEFAULT_WORDLIST[parseInt(binary, 2)])
+  const entropyInBinaryForm = Array.from(entropy)
+    .map(byte => byte.toString(2).padStart(8, '0')).join('')
 
-  if (!mapped || (mapped.length < 12)) {
-    throw new Error('Unable to map entropy to mnemonicToMiniSecret')
+  const entropyWithChecksum = entropyInBinaryForm + sha256FirstNBits(entropy)
+
+  const splittedBy11BinaryDigits = entropyWithChecksum.match(/(.{1,11})/g)
+  const wordNumbers = splittedBy11BinaryDigits?.map(binary => parseInt(binary, 2))
+
+  if (!wordNumbers || (wordNumbers.length < 12)) {
+    throw new Error('Unable to map entropy to mnemonic')
   }
 
-  return mapped.join(' ')
+  const WORDLIST = DEFAULT_WORDLIST.split('|')
+  const words = wordNumbers.map((wordNumber) => WORDLIST[wordNumber])
+
+  return words.join(' ')
+}
+
+export const generateMnemonic = (strengthInBits = 128): string => {
+  return entropyToMnemonic(randomBytes(strengthInBits / 8)).toString().trim()
 }
 
 export const validateMnemonic = (mnemonic: string): {result: true, error: null} | {result: false, error: Error} => {

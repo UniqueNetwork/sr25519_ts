@@ -27,9 +27,9 @@ The implementation includes functions for encoding and decoding [Polkadot-format
 ## Usage
 
 ```typescript
-import {Account} from '@unique-nft/sr25519'
+import {Sr25519Account} from '@unique-nft/sr25519'
 
-const account = Account.fromUri('//Alice')
+const account = Sr25519Account.fromUri('//Alice')
 console.log(account.address) // 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
 
 // sign, parameter may be Uint8Array, hex string or a plain string
@@ -38,17 +38,24 @@ console.log(account.sign('hello world')) //Uint8Array(64) [142, 143, 161,  13,  
 // account has verify method
 console.log(account.verify('hello world', account.sign('hello world'))) // true
 
-// you can also verify signature with static method without instantiating an account
-console.log(Account.verifySignature('hello world', account.sign('hello world'), account.address)) // true
+// also signature can be verified with static method without instantiating an account
+console.log(Sr25519Account.verifySignature('hello world', account.sign('hello world'), account.address)) // true
+
+// a new random mnemonic and a new Sr25519Account account can be generated like this
+const mnemonic = Sr25519Account.generateMnemonic()
+const account2 = Sr25519Account.fromUri(mnemonic)
+
+// also package provides the account Typescript type
+import type {ISr25519Account} from '@unique-nft/sr25519'
 ```
 
 Also this lib provides a ready to use signer for the [Unique SDK](https://www.npmjs.com/package/@unique-nft/sdk):
 
 ```typescript
-const account = Account.fromUri('//Alice')
+const account = Sr25519Account.fromUri('//Alice')
 const sdk = new UniqueSdk.Sdk({
   baseUrl: 'https://rest.unique.network/opal/v1',
-  signer: account.signer,
+  account,
 })
 ```
 

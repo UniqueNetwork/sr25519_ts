@@ -1,6 +1,15 @@
-import {describe, test, expect} from 'vitest'
-import {mnemonicToMiniSecretAsync, mnemonicToMiniSecret} from './mnemonic'
+import {describe, test, expect, beforeAll} from 'vitest'
+import {
+  mnemonicToMiniSecretAsync,
+  mnemonicToMiniSecret,
+  entropyToMnemonic,
+  generateMnemonic,
+  validateMnemonic,
+} from './mnemonic'
 import {Keypair} from '../../src/keypair'
+import {randomBytes} from '@noble/hashes/utils'
+import {entropyToMnemonic as entropyToMnemonicFromLib} from '@polkadot/util-crypto/mnemonic/bip39'
+import Sr25519Account from '../../src'
 
 const PHRASE = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk'
 
@@ -43,13 +52,13 @@ const FOR_PHRASE = {
   full: Uint8Array.from([40, 176, 174, 34, 28, 107, 176, 104, 86, 178, 135, 246, 13, 126, 160, 217, 133, 82, 234, 90, 22, 219, 22, 149, 104, 73, 170, 55, 29, 179, 235, 81, 253, 25, 12, 206, 116, 223, 53, 100, 50, 180, 16, 189, 100, 104, 35, 9, 214, 222, 219, 39, 199, 104, 69, 218, 243, 136, 85, 124, 186, 195, 202, 52, 70, 235, 221, 239, 140, 217, 187, 22, 125, 195, 8, 120, 215, 17, 59, 126, 22, 142, 111, 6, 70, 190, 255, 215, 125, 105, 211, 155, 173, 118, 180, 122]),
 }
 
-describe('mini secret', async() => {
-  test('on phrase', async() => {
+describe('mini secret', async () => {
+  test('on phrase', async () => {
     const miniSecret = mnemonicToMiniSecret(PHRASE)
     expect(miniSecret).toEqual(miniSecretForPhrase)
   })
 
-  test('on phrase - async', async() => {
+  test('on phrase - async', async () => {
     const miniSecret = await mnemonicToMiniSecretAsync(PHRASE)
     expect(miniSecret).toEqual(miniSecretForPhrase)
   })
@@ -59,7 +68,7 @@ describe('mini secret', async() => {
     expect(miniSecret).toEqual(miniSecretForPhraseWithPassword)
   })
 
-  test('on phrase with password - async', async() => {
+  test('on phrase with password - async', async () => {
     const miniSecret = await mnemonicToMiniSecretAsync(PHRASE, 'password')
     expect(miniSecret).toEqual(miniSecretForPhraseWithPassword)
   })
@@ -77,5 +86,22 @@ describe('mini secret', async() => {
     expect(keypairBack.publicKey.key).toEqual(FOR_PHRASE.publicKey)
     expect(keypairBack.secretKey.ToBytes()).toEqual(FOR_PHRASE.secretKeyWithNonce)
     expect(keypairBack.secretKey.key.bytes).toEqual(FOR_PHRASE.secretKey)
+  })
+
+  test('entropyToMnemonic', () => {
+    const random = randomBytes(128 / 8) // 128 bit entropy for 12 word mnemonic
+    const mnemonic = entropyToMnemonic(random)
+    expect(mnemonic.split(' ').length).toEqual(12)
+
+    const testMnemonic = entropyToMnemonicFromLib(random)
+    expect(mnemonic).toEqual(testMnemonic)
+  })
+
+  test('generateMnemonic', () => {
+    const mnemonic = generateMnemonic()
+    expect(mnemonic.split(' ').length).toEqual(12)
+
+    expect(validateMnemonic(mnemonic).result).toEqual(true)
+    expect(Sr25519Account.fromUri(mnemonic).address).toBeTypeOf('string')
   })
 })
