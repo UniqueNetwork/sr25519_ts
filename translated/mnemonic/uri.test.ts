@@ -11,7 +11,7 @@ import {
 import {Keypair} from '../../src/keypair'
 import {mnemonicToMiniSecret} from './mnemonic'
 import * as utilCrypto from '@polkadot/util-crypto'
-import {Account} from '../../src'
+import {Sr25519Account} from '../../src'
 import {uInt8ArrayToHex} from './bytes'
 
 const PHRASE = 'bottom drive obey lake curtain smoke basket hold race lonely fit walk'
@@ -172,7 +172,7 @@ describe('derivation', async() => {
     const keypairFromPolkadot = utilCrypto.sr25519PairFromSeed(miniSecretFromPolkadot)
     const derivedFromPolkadot = utilCrypto.sr25519DeriveHard(keypairFromPolkadot, getChainCode('Alice'))
 
-    const derivedFromOurLib = Account.other.dangerouslyParseUriAndGetFullKeypair('//Alice')
+    const derivedFromOurLib = Sr25519Account.other.dangerouslyParseUriAndGetFullKeypair('//Alice')
 
     expect(derivedFromPolkadot.publicKey).toEqual(derivedFromOurLib.publicKey.key)
     expect(derivedFromPolkadot.secretKey).toEqual(derivedFromOurLib.secretKey.ToBytes())
@@ -183,7 +183,7 @@ describe('derivation', async() => {
     const keypairFromPolkadot = utilCrypto.sr25519PairFromSeed(miniSecretFromPolkadot)
     const derivedFromPolkadot = utilCrypto.sr25519DeriveSoft(keypairFromPolkadot, getChainCode('foo'))
 
-    const derivedFromOurLib = Account.other.dangerouslyParseUriAndGetFullKeypair(`${DEFAULT_MNEMONIC}/foo`)
+    const derivedFromOurLib = Sr25519Account.other.dangerouslyParseUriAndGetFullKeypair(`${DEFAULT_MNEMONIC}/foo`)
 
     expect(derivedFromPolkadot.publicKey)
       .toEqual(derivedFromOurLib.publicKey.key)

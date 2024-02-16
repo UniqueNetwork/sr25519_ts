@@ -1,6 +1,6 @@
 {
   "name": "@unique-nft/sr25519",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Pure Typescript sr25519 implementation",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -31,23 +31,23 @@
     "access": "public"
   },
   "devDependencies": {
-    "@polkadot/util-crypto": "^10.2.1",
-    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@polkadot/util-crypto": "^12.6.2",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
     "bn.js": "^5.2.1",
-    "eslint": "^8.0.1",
-    "eslint-config-standard-with-typescript": "^34.0.0",
-    "eslint-plugin-import": "^2.25.2",
-    "eslint-plugin-n": "^15.0.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "prettier": "^2.8.4",
-    "rimraf": "^4.1.2",
-    "tsup": "^6.5.0",
-    "tsx": "^3.12.1",
-    "typescript": "^4.9.5",
-    "vitest": "^0.25.5"
+    "eslint": "^8.56.0",
+    "eslint-config-standard-with-typescript": "^43.0.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.1.1",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.0.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.0"
   },
   "dependencies": {
-    "@noble/hashes": "^1.2.0",
+    "@noble/hashes": "^1.3.3",
     "base-x": "^4.0.0"
   }
 }
